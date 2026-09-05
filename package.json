@@ -1,7 +1,7 @@
 {
-  "name": "navprompts-ai-analyzer",
+  "name": "sami-prompts",
   "version": "1.0.0",
-  "description": "Viral AI Video Prompts Platform - Soniprompts / NavPrompts",
+  "description": "Sami Prompts — Viral AI Video Prompts Platform & Admin Studio",
   "main": "server/app.js",
   "scripts": {
     "start": "node server/app.js",

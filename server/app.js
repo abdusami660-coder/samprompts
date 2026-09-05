@@ -34,7 +34,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(session({
-  secret: 'navprompts-secret-key-2026-super-secure',
+  secret: 'sami-prompts-secret-key-2026-super-secure',
   resave: false,
   saveUninitialized: false,
   cookie: {
@@ -589,32 +589,128 @@ async function requireAdmin(req, res, next) {
   next();
 }
 
+app.get('/api/admin/stats', requireAdmin, async (req, res) => {
+  try {
+    const promptsCount = await get(`SELECT COUNT(*) as count, SUM(views_count) as views, SUM(copies_count) as copies FROM prompts`);
+    const catsCount = await get(`SELECT COUNT(*) as count FROM categories`);
+    const usersCount = await get(`SELECT COUNT(*) as count FROM users`);
+    const postsCount = await get(`SELECT COUNT(*) as count FROM community_posts`);
+
+    res.json({
+      totalPrompts: promptsCount.count || 0,
+      totalViews: promptsCount.views || 0,
+      totalCopies: promptsCount.copies || 0,
+      totalCategories: catsCount.count || 0,
+      totalUsers: usersCount.count || 0,
+      totalPosts: postsCount.count || 0
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch admin stats.' });
+  }
+});
+
 app.post('/api/admin/prompts', requireAdmin, upload.array('storyboard_files', 8), async (req, res) => {
   try {
-    const { title, category, type = 'premium', prompt_content, teaser } = req.body;
+    const { title, category, type = 'premium', prompt_content, teaser, custom_category } = req.body;
     if (!title || !prompt_content) {
       return res.status(400).json({ error: 'Title and prompt content are required.' });
     }
 
+    let finalCategory = (category || 'General').trim();
+    if (custom_category && custom_category.trim()) {
+      finalCategory = custom_category.trim();
+      const slug = finalCategory.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      await run(`INSERT OR IGNORE INTO categories (name, slug) VALUES (?, ?)`, [finalCategory, slug]);
+    }
+
     const storyboards = (req.files || []).map(f => `/uploads/${f.filename}`);
-    const thumbnail = storyboards[0] || '';
+    const thumbnail = storyboards[0] || (req.body.thumbnail || '/assets/img/cover.jpg');
 
     const result = await run(`
       INSERT INTO prompts (title, category, type, prompt_content, teaser, thumbnail, storyboards, views_count, copies_count)
       VALUES (?, ?, ?, ?, ?, ?, ?, 0, 0)
     `, [
       title.trim(),
-      category || 'General',
+      finalCategory,
       type,
       prompt_content.trim(),
-      teaser || 'New viral AI video prompt package.',
+      teaser ? teaser.trim() : `Master viral AI prompt for ${title.trim()}. Includes full timing, camera shots, and negative prompts.`,
       thumbnail,
       JSON.stringify(storyboards)
     ]);
 
     res.json({ success: true, prompt_id: result.lastID });
   } catch (err) {
+    console.error('Create prompt error:', err);
     res.status(500).json({ error: 'Failed to create prompt.' });
+  }
+});
+
+app.get('/api/admin/prompts/:id', requireAdmin, async (req, res) => {
+  try {
+    const prompt = await get(`SELECT * FROM prompts WHERE id = ?`, [parseInt(req.params.id, 10)]);
+    if (!prompt) return res.status(404).json({ error: 'Prompt not found' });
+    prompt.storyboards = prompt.storyboards ? JSON.parse(prompt.storyboards) : [];
+    res.json({ prompt });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch prompt.' });
+  }
+});
+
+app.put('/api/admin/prompts/:id', requireAdmin, upload.array('storyboard_files', 8), async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    const existing = await get(`SELECT * FROM prompts WHERE id = ?`, [id]);
+    if (!existing) return res.status(404).json({ error: 'Prompt not found.' });
+
+    const { title, category, type, prompt_content, teaser, custom_category } = req.body;
+    let finalCategory = (category || existing.category).trim();
+    if (custom_category && custom_category.trim()) {
+      finalCategory = custom_category.trim();
+      const slug = finalCategory.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      await run(`INSERT OR IGNORE INTO categories (name, slug) VALUES (?, ?)`, [finalCategory, slug]);
+    }
+
+    let storyboards = existing.storyboards ? JSON.parse(existing.storyboards) : [];
+    if (req.files && req.files.length > 0) {
+      const newImages = req.files.map(f => `/uploads/${f.filename}`);
+      storyboards = [...storyboards, ...newImages];
+    }
+    const thumbnail = storyboards[0] || existing.thumbnail;
+
+    await run(`
+      UPDATE prompts
+      SET title = ?, category = ?, type = ?, prompt_content = ?, teaser = ?, thumbnail = ?, storyboards = ?
+      WHERE id = ?
+    `, [
+      title ? title.trim() : existing.title,
+      finalCategory,
+      type || existing.type,
+      prompt_content ? prompt_content.trim() : existing.prompt_content,
+      teaser ? teaser.trim() : existing.teaser,
+      thumbnail,
+      JSON.stringify(storyboards),
+      id
+    ]);
+
+    res.json({ success: true, message: 'Prompt updated successfully!' });
+  } catch (err) {
+    console.error('Update prompt error:', err);
+    res.status(500).json({ error: 'Failed to update prompt.' });
+  }
+});
+
+app.patch('/api/admin/prompts/:id/toggle-type', requireAdmin, async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    const prompt = await get(`SELECT type FROM prompts WHERE id = ?`, [id]);
+    if (!prompt) return res.status(404).json({ error: 'Prompt not found' });
+
+    const newType = prompt.type === 'free' ? 'premium' : 'free';
+    await run(`UPDATE prompts SET type = ? WHERE id = ?`, [newType, id]);
+    res.json({ success: true, new_type: newType });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to toggle prompt type.' });
   }
 });
 
@@ -624,6 +720,30 @@ app.delete('/api/admin/prompts/:id', requireAdmin, async (req, res) => {
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: 'Failed to delete prompt.' });
+  }
+});
+
+app.post('/api/admin/categories', requireAdmin, async (req, res) => {
+  try {
+    const { name } = req.body;
+    if (!name || !name.trim()) return res.status(400).json({ error: 'Category name is required.' });
+
+    const cleanName = name.trim();
+    const slug = cleanName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    await run(`INSERT OR IGNORE INTO categories (name, slug) VALUES (?, ?)`, [cleanName, slug]);
+    const cat = await get(`SELECT * FROM categories WHERE slug = ?`, [slug]);
+    res.json({ success: true, category: cat, id: cat ? cat.id : null, name: cleanName, slug });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to create category.' });
+  }
+});
+
+app.delete('/api/admin/categories/:id', requireAdmin, async (req, res) => {
+  try {
+    await run(`DELETE FROM categories WHERE id = ?`, [parseInt(req.params.id, 10)]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to delete category.' });
   }
 });
 
@@ -673,7 +793,7 @@ app.use((req, res) => {
 // Start server
 initDb().then(() => {
   app.listen(PORT, () => {
-    console.log(`\n🚀 NavPrompts Server running at http://localhost:${PORT}`);
+    console.log(`\n🚀 Sami Prompts Server running at http://localhost:${PORT}`);
   });
 }).catch(err => {
   console.error('Fatal DB error on startup:', err);

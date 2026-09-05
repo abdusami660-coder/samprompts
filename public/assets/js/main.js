@@ -1,11 +1,10 @@
 /* ═══════════════════════════════════════════
-   NavPrompts — Core Interactive Engine
+   Sami Prompts — Core Interactive Engine
    ═══════════════════════════════════════════ */
 
 (function () {
   'use strict';
 
-  // Global App State
   window.NP = {
     user: null,
     async init() {
@@ -39,7 +38,11 @@
           <a href="/" class="${currentPath === '/' || currentPath.endsWith('index.html') ? 'active' : ''}">Home</a>
           <a href="/browse" class="${currentPath.includes('browse') ? 'active' : ''}">All Prompts</a>
           <a href="/community" class="${currentPath.includes('community') ? 'active' : ''}">Social Corner</a>
-          ${this.user.role === 'admin' ? `<a href="/admin" class="${currentPath.includes('admin') ? 'active' : ''}" style="color:var(--primary);">Admin</a>` : ''}
+          ${this.user.role === 'admin' ? `
+            <a href="/admin" class="${currentPath.includes('admin') ? 'active' : ''}" style="color:var(--primary);font-weight:700;">
+              ⚡ Admin Studio
+            </a>
+          ` : ''}
           <a href="/account" class="${currentPath.includes('account') ? 'active' : ''}">My Account</a>
           <a href="#" id="logout-btn" class="nav-btn" style="background:#4B5563 !important;">Logout</a>
         `;
@@ -77,7 +80,6 @@
       const slides = slider.querySelectorAll('.cover-slide');
       if (slides.length <= 1) return;
 
-      // Create dots
       const dotsWrap = document.createElement('div');
       dotsWrap.className = 'slider-dots';
       slides.forEach((_, i) => {
@@ -105,7 +107,6 @@
       }
 
       timer = setInterval(nextSlide, 4500);
-
       slider.addEventListener('mouseenter', () => clearInterval(timer));
       slider.addEventListener('mouseleave', () => { timer = setInterval(nextSlide, 4500); });
     },
@@ -192,7 +193,6 @@
       });
     },
 
-    // Simulated Checkout Modal
     openCheckout() {
       if (!this.user) {
         window.location.href = '/login?next=/pricing';
@@ -209,7 +209,7 @@
             <button class="modal-close" onclick="NP.closeCheckout()">×</button>
             <div style="text-align:center;margin-bottom:20px;">
               <span class="price-badge">Instant Activation</span>
-              <h2 style="font-size:22px;margin:12px 0 4px;">Join NavPrompts Community</h2>
+              <h2 style="font-size:22px;margin:12px 0 4px;">Join Sami Prompts Community</h2>
               <p style="color:var(--muted);font-size:14px;">$5.00 / month · Unlock all viral prompts & downloads</p>
             </div>
 

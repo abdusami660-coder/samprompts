@@ -154,25 +154,18 @@ async function initDb() {
 
   // Seed Users
   const samiHash = await bcrypt.hash('Sami1234!', 10);
-  const adminHash = await bcrypt.hash('admin123', 10);
   const userHash = await bcrypt.hash('user123', 10);
 
-  // 1. User Sami (Active Premium Member)
+  // 1. User Sami (Super Admin & Platform Creator)
   await run(`
     INSERT OR REPLACE INTO users (id, name, email, password_hash, role, membership_status, membership_expires_at)
-    VALUES (1, 'sami', 'abdusami660@gmail.com', ?, 'user', 'premium', '2026-09-13 23:59:59')
+    VALUES (1, 'Sami', 'abdusami660@gmail.com', ?, 'admin', 'premium', '2030-01-01 00:00:00')
   `, [samiHash]);
 
-  // 2. Admin Shailendra Soni
+  // 2. Demo Free User (for testing visitor/free view)
   await run(`
     INSERT OR REPLACE INTO users (id, name, email, password_hash, role, membership_status, membership_expires_at)
-    VALUES (2, 'Shailendra Soni', 'admin@navprompts.com', ?, 'admin', 'premium', '2030-01-01 00:00:00')
-  `, [adminHash]);
-
-  // 3. Demo Free User
-  await run(`
-    INSERT OR REPLACE INTO users (id, name, email, password_hash, role, membership_status, membership_expires_at)
-    VALUES (3, 'Alex Demo (Free)', 'free@navprompts.com', ?, 'user', 'free', NULL)
+    VALUES (2, 'Demo Visitor (Free)', 'free@samiprompts.com', ?, 'user', 'free', NULL)
   `, [userHash]);
 
   // Check if prompts need seeding
@@ -284,12 +277,13 @@ async function seedCommunity() {
   const posts = JSON.parse(raw);
 
   for (const p of posts) {
+    const authorName = p.is_admin ? 'Sami' : p.author;
     const res = await run(`
       INSERT INTO community_posts (id, author, is_admin, content, likes)
       VALUES (?, ?, ?, ?, ?)
     `, [
       parseInt(p.id, 10),
-      p.author,
+      authorName,
       p.is_admin ? 1 : 0,
       p.content,
       p.likes || 0

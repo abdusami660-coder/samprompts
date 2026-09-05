@@ -3,12 +3,132 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Dashboard — NavPrompts</title>
+  <title>Sami's Prompt Studio — Admin Dashboard</title>
   <link rel="icon" type="image/png" href="/assets/img/logo.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/assets/css/style.css">
+  <style>
+    .studio-tabs {
+      display: flex;
+      gap: 10px;
+      margin: 24px 0 20px;
+      border-bottom: 2px solid var(--border);
+      padding-bottom: 12px;
+      overflow-x: auto;
+    }
+    .tab-btn {
+      padding: 10px 20px;
+      border-radius: var(--radius-pill);
+      border: 1.5px solid var(--border);
+      background: #fff;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      color: var(--text-secondary);
+      transition: var(--transition);
+      white-space: nowrap;
+    }
+    .tab-btn:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+    .tab-btn.active {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+      box-shadow: 0 4px 12px rgba(124, 92, 255, 0.3);
+    }
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: var(--shadow-xs);
+    }
+    .stat-card span {
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .stat-card strong {
+      display: block;
+      font-size: 28px;
+      font-weight: 900;
+      color: var(--text);
+      margin-top: 4px;
+    }
+    .template-chips {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+    .tchip {
+      background: #F3F0FF;
+      border: 1px solid #DDD6FE;
+      color: #6D28D9;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 5px 12px;
+      border-radius: var(--radius-pill);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .tchip:hover {
+      background: #7C5CFF;
+      color: #fff;
+      border-color: #7C5CFF;
+    }
+    .preview-chips {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    .preview-thumb {
+      width: 70px;
+      height: 70px;
+      border-radius: 8px;
+      object-fit: cover;
+      border: 1px solid var(--border);
+    }
+    .admin-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+      text-align: left;
+    }
+    .admin-table th {
+      padding: 12px 10px;
+      border-bottom: 2px solid var(--border);
+      color: var(--muted);
+      font-weight: 700;
+      font-size: 12.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .admin-table td {
+      padding: 12px 10px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    .badge-tier-toggle {
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .badge-tier-toggle:hover {
+      opacity: 0.8;
+      transform: scale(1.05);
+    }
+  </style>
 </head>
 <body>
 
@@ -16,96 +136,230 @@
   <header class="site-header">
     <div class="container header-inner">
       <a href="/" class="brand">
-        <img src="/assets/img/logo.png" alt="NavPrompts Logo">
-        <span>Nav<b>Prompts</b> <span style="font-size:12px;background:#EDE9FE;color:#6D28D9;padding:2px 8px;border-radius:4px;vertical-align:middle;">Admin</span></span>
+        <img src="/assets/img/logo.png" alt="Sami Prompts Logo">
+        <span>Sami<b>Prompts</b> <span style="font-size:12px;background:#EDE9FE;color:#6D28D9;padding:2px 8px;border-radius:4px;vertical-align:middle;">👑 Creator Studio</span></span>
       </a>
+      <input type="checkbox" id="nav-toggle" class="nav-toggle-cb">
+      <label for="nav-toggle" class="nav-toggle">☰</label>
       <nav class="main-nav" id="main-nav">
-        <!-- Dynamic header -->
+        <!-- Injected dynamically -->
       </nav>
     </div>
   </header>
 
   <main>
-    <div class="container" style="padding-top:36px;padding-bottom:60px;">
-      <h1 class="section-title">Creator & Admin Control Panel</h1>
-      <p class="section-sub">Publish new prompts, moderate posts, and manage members</p>
+    <div class="container" style="padding-top:30px;padding-bottom:60px;">
 
-      <div id="admin-auth-check" style="display:none;">
-        <div style="display:grid;grid-template-columns:1fr;gap:30px;">
-          <!-- Add Prompt Form -->
-          <div class="acc-card">
-            <h3>✨ Publish New AI Video Prompt</h3>
-            <form id="add-prompt-form" enctype="multipart/form-data">
-              <div class="fld">
-                <label>Prompt Title</label>
-                <input type="text" id="p-title" required placeholder="e.g. 30SEC VIRAL SCI-FI ROBOT ENCOUNTER">
-              </div>
-
-              <div style="display:flex;gap:14px;flex-wrap:wrap;">
-                <div class="fld" style="flex:1;">
-                  <label>Category</label>
-                  <select id="p-cat">
-                    <option value="Emotional & Inspirational">Emotional & Inspirational</option>
-                    <option value="Animal & Pets">Animal & Pets</option>
-                    <option value="Art & Animation">Art & Animation</option>
-                    <option value="ASMR & Satisfying">ASMR & Satisfying</option>
-                    <option value="Comedy & Entertainment">Comedy & Entertainment</option>
-                    <option value="DIY & Crafts">DIY & Crafts</option>
-                    <option value="Fantasy & Sci-Fi">Fantasy & Sci-Fi</option>
-                    <option value="Food & Cooking">Food & Cooking</option>
-                    <option value="Historical & Nostalgia">Historical & Nostalgia</option>
-                    <option value="Kids & Family">Kids & Family</option>
-                    <option value="Nature & Wildlife">Nature & Wildlife</option>
-                    <option value="Sports & Action">Sports & Action</option>
-                  </select>
-                </div>
-
-                <div class="fld" style="flex:1;">
-                  <label>Access Tier</label>
-                  <select id="p-type">
-                    <option value="premium">⭐ Premium (Members Only)</option>
-                    <option value="free">🎁 Free (Everyone)</option>
-                  </select>
-                </div>
-              </div>
-
-              <div class="fld">
-                <label>Teaser Summary (Shown to free users if premium)</label>
-                <input type="text" id="p-teaser" placeholder="Brief summary of what the prompt builds and tools needed…">
-              </div>
-
-              <div class="fld">
-                <label>Storyboard Reference Images (Max 8 images)</label>
-                <input type="file" id="p-storyboards" accept="image/*" multiple>
-              </div>
-
-              <div class="fld">
-                <label>Master Prompt Full Content</label>
-                <textarea id="p-content" style="min-height:220px;font-family:monospace;font-size:13px;" required placeholder="# ULTRA MASTER PROMPT...&#10;SHOT 1 - ...&#10;CAMERA SPECS..."></textarea>
-              </div>
-
-              <button type="submit" id="p-submit-btn" class="btn btn-primary btn-lg">Publish Prompt</button>
-            </form>
-          </div>
-
-          <!-- Existing Prompts List -->
-          <div class="acc-card">
-            <h3>📚 Manage Published Prompts</h3>
-            <div id="admin-prompts-list" style="margin-top:14px;">Loading prompts…</div>
-          </div>
-
-          <!-- Users List -->
-          <div class="acc-card">
-            <h3>👥 Registered Users & VIP Members</h3>
-            <div id="admin-users-list" style="overflow-x:auto;margin-top:14px;">Loading users…</div>
-          </div>
-        </div>
+      <!-- Access Guard -->
+      <div id="admin-denied" style="text-align:center;padding:70px 20px;">
+        <div style="font-size:48px;margin-bottom:12px;">🔒</div>
+        <h2>Sami's Creator Studio Access Required</h2>
+        <p style="color:var(--muted);margin:10px 0 24px;">Please login with your Sami Prompts credentials to access this dashboard.</p>
+        <a href="/login?next=/admin" class="btn btn-primary btn-lg">Login as Sami (abdusami660@gmail.com)</a>
       </div>
 
-      <div id="admin-denied" style="text-align:center;padding:60px 20px;">
-        <h2>Admin Access Required</h2>
-        <p style="color:var(--muted);margin:10px 0 20px;">Please login with an administrator account to view this panel.</p>
-        <a href="/login" class="btn btn-primary">Login as Admin (admin@navprompts.com / admin123)</a>
+      <!-- Main Dashboard Content -->
+      <div id="admin-content" style="display:none;">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px;margin-bottom:20px;">
+          <div>
+            <h1 style="font-size:28px;font-weight:900;">Sami's Prompt Studio</h1>
+            <p style="color:var(--muted);font-size:15px;">Save, categorize, and publish your viral AI video prompts</p>
+          </div>
+          <div>
+            <button type="button" class="btn btn-primary" onclick="switchTab('tab-editor'); resetPromptForm();">
+              ➕ New Prompt
+            </button>
+          </div>
+        </div>
+
+        <!-- Live Statistics Bar -->
+        <div class="stats-row" id="stats-row">
+          <div class="stat-card">
+            <span>🚀 Total Prompts</span>
+            <strong id="stat-prompts">0</strong>
+          </div>
+          <div class="stat-card">
+            <span>📂 Categories</span>
+            <strong id="stat-categories">0</strong>
+          </div>
+          <div class="stat-card">
+            <span>👁 Prompt Views</span>
+            <strong id="stat-views">0</strong>
+          </div>
+          <div class="stat-card">
+            <span>📋 Master Prompt Copies</span>
+            <strong id="stat-copies">0</strong>
+          </div>
+        </div>
+
+        <!-- Tab Controls -->
+        <div class="studio-tabs">
+          <button type="button" class="tab-btn active" data-tab="tab-editor" onclick="switchTab('tab-editor')">
+            ✨ Add / Edit Prompt
+          </button>
+          <button type="button" class="tab-btn" data-tab="tab-library" onclick="switchTab('tab-library')">
+            📚 Manage Prompts Library (<span id="tab-count-prompts">0</span>)
+          </button>
+          <button type="button" class="tab-btn" data-tab="tab-categories" onclick="switchTab('tab-categories')">
+            🏷 Categories Manager
+          </button>
+          <button type="button" class="tab-btn" data-tab="tab-community" onclick="switchTab('tab-community')">
+            💬 Community Feed
+          </button>
+        </div>
+
+        <!-- TAB 1: ADD / EDIT PROMPT -->
+        <div id="tab-editor" class="tab-pane">
+          <div class="acc-card">
+            <h3 id="form-heading" style="font-size:20px;margin-bottom:18px;">✨ Add New Viral Prompt</h3>
+            
+            <form id="prompt-studio-form" enctype="multipart/form-data">
+              <input type="hidden" id="edit-prompt-id" value="">
+
+              <div class="fld">
+                <label>Prompt Title</label>
+                <input type="text" id="form-title" required placeholder="e.g. 30-SECOND EMOTIONAL VIRAL MICRO-DRAMA">
+              </div>
+
+              <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(240px, 1fr));gap:16px;">
+                <!-- Category Selector -->
+                <div class="fld">
+                  <label>Category</label>
+                  <select id="form-category" required>
+                    <!-- Populated dynamically -->
+                  </select>
+                </div>
+
+                <!-- Custom Category -->
+                <div class="fld">
+                  <label>Or Add New Category (Optional)</label>
+                  <input type="text" id="form-custom-category" placeholder="e.g. Hyper-Realistic Sci-Fi">
+                </div>
+
+                <!-- Access Tier -->
+                <div class="fld">
+                  <label>Access Tier</label>
+                  <select id="form-type">
+                    <option value="premium">⭐ Premium (VIP Community Only)</option>
+                    <option value="free">🎁 Free (Everyone Can View)</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Teaser Summary -->
+              <div class="fld">
+                <label>Teaser Overview (Shown to guests if premium)</label>
+                <input type="text" id="form-teaser" placeholder="Single-pass Seedance 2.5 prompt with emotional payoff, lens ladder, and full acting cue breakdown…">
+              </div>
+
+              <!-- Storyboards & Reference Images -->
+              <div class="fld">
+                <label>Storyboard & Reference Images (Upload multiple)</label>
+                <input type="file" id="form-storyboards" accept="image/*" multiple>
+                <div class="preview-chips" id="images-preview"></div>
+              </div>
+
+              <!-- Quick Template Snippets -->
+              <div style="margin:20px 0 10px;">
+                <label style="font-size:13px;font-weight:700;color:var(--text);display:block;margin-bottom:8px;">
+                  ⚡ Quick Template Injectors (Click to insert):
+                </label>
+                <div class="template-chips">
+                  <button type="button" class="tchip" onclick="injectTemplate('timing')">+ 11-Shot Timing Structure</button>
+                  <button type="button" class="tchip" onclick="injectTemplate('lens')">+ Lens Ladder (28mm-85mm)</button>
+                  <button type="button" class="tchip" onclick="injectTemplate('overlay')">+ Red Circle & End Card Specs</button>
+                  <button type="button" class="tchip" onclick="injectTemplate('audio')">+ Realistic Audio & Foley</button>
+                  <button type="button" class="tchip" onclick="injectTemplate('negative')">+ AI Video Negative Block</button>
+                </div>
+              </div>
+
+              <!-- Master Prompt Textarea -->
+              <div class="fld">
+                <label>Master Prompt Content (Full production instruction)</label>
+                <textarea id="form-content" style="min-height:360px;font-family:'Consolas','Courier New',monospace;font-size:13.5px;line-height:1.6;" required placeholder="# ULTRA MASTER PROMPT v3&#10;## PRODUCTION READY VERTICAL VIDEO&#10;&#10;SHOT 1 — 0.0-2.2s | 28mm | Opening Wide..."></textarea>
+              </div>
+
+              <div style="display:flex;gap:12px;margin-top:16px;">
+                <button type="submit" id="form-submit-btn" class="btn btn-primary btn-lg">
+                  💾 Save & Publish Prompt
+                </button>
+                <button type="button" class="btn btn-outline btn-lg" onclick="resetPromptForm()">
+                  Clear Form
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- TAB 2: MANAGE PROMPTS LIBRARY -->
+        <div id="tab-library" class="tab-pane" style="display:none;">
+          <div class="acc-card">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:18px;">
+              <h3 style="font-size:20px;">📚 All Published Prompts</h3>
+              <div style="display:flex;gap:10px;">
+                <input type="text" id="lib-search" placeholder="Filter prompts…" style="padding:8px 14px;border:1.5px solid var(--border);border-radius:var(--radius-pill);font-size:13px;">
+                <select id="lib-cat-filter" style="padding:8px 14px;border:1.5px solid var(--border);border-radius:var(--radius-pill);font-size:13px;">
+                  <option value="all">All Categories</option>
+                </select>
+              </div>
+            </div>
+
+            <div style="overflow-x:auto;">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Thumb</th>
+                    <th>ID & Title</th>
+                    <th>Category</th>
+                    <th>Tier</th>
+                    <th>Stats</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="library-tbody">
+                  <tr><td colspan="6" style="text-align:center;padding:30px;color:var(--muted);">Loading prompts…</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 3: CATEGORIES MANAGER -->
+        <div id="tab-categories" class="tab-pane" style="display:none;">
+          <div class="acc-card">
+            <h3 style="font-size:20px;margin-bottom:16px;">🏷 Manage Categories</h3>
+            
+            <form id="add-cat-form" style="display:flex;gap:12px;margin-bottom:24px;max-width:500px;">
+              <input type="text" id="new-cat-name" required placeholder="New Category Name (e.g. 3D Cinematic)" style="flex:1;padding:10px 16px;border:1.5px solid var(--border);border-radius:var(--radius-pill);">
+              <button type="submit" class="btn btn-primary">Add Category</button>
+            </form>
+
+            <div style="overflow-x:auto;">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Category Name</th>
+                    <th>Slug</th>
+                    <th>Total Prompts</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="categories-tbody">
+                  <tr><td colspan="4" style="text-align:center;padding:30px;color:var(--muted);">Loading categories…</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 4: COMMUNITY MODERATION -->
+        <div id="tab-community" class="tab-pane" style="display:none;">
+          <div class="acc-card">
+            <h3 style="font-size:20px;margin-bottom:18px;">💬 Community Posts & Feed</h3>
+            <div id="community-admin-list">Loading community posts…</div>
+          </div>
+        </div>
+
       </div>
     </div>
   </main>
@@ -114,123 +368,355 @@
     <div class="container footer-grid">
       <div class="f-left">
         <div class="footer-brand">
-          <img src="/assets/img/logo.png" alt="NavPrompts Logo">
-          <span>Nav<b>Prompts</b></span>
+          <img src="/assets/img/logo.png" alt="Sami Prompts Logo">
+          <span>Sami<b>Prompts</b></span>
         </div>
       </div>
-      <p class="footer-copy">© 2026 NavPrompts Admin Portal</p>
+      <p class="footer-copy">© 2026 Sami Prompts · Creator & Admin Control Studio</p>
     </div>
   </footer>
 
   <script src="/assets/js/main.js"></script>
   <script>
+    let allPrompts = [];
+    let allCategories = [];
+
     document.addEventListener('DOMContentLoaded', async () => {
       try {
         const res = await fetch('/api/auth/me');
         const data = await res.json();
+
         if (data.user && data.user.role === 'admin') {
           document.getElementById('admin-denied').style.display = 'none';
-          document.getElementById('admin-auth-check').style.display = 'block';
-          loadAdminPrompts();
-          loadAdminUsers();
+          document.getElementById('admin-content').style.display = 'block';
+          await refreshDashboard();
+        }
+      } catch (err) {
+        console.error('Auth verification error:', err);
+      }
+    });
+
+    async function refreshDashboard() {
+      await Promise.all([
+        loadStats(),
+        loadCategories(),
+        loadPrompts()
+      ]);
+    }
+
+    async function loadStats() {
+      try {
+        const res = await fetch('/api/admin/stats');
+        const data = await res.json();
+        document.getElementById('stat-prompts').textContent = data.totalPrompts;
+        document.getElementById('stat-categories').textContent = data.totalCategories;
+        document.getElementById('stat-views').textContent = data.totalViews;
+        document.getElementById('stat-copies').textContent = data.totalCopies;
+        document.getElementById('tab-count-prompts').textContent = data.totalPrompts;
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function loadCategories() {
+      try {
+        const res = await fetch('/api/categories');
+        const data = await res.json();
+        allCategories = data.categories || [];
+
+        // Update dropdown
+        const select = document.getElementById('form-category');
+        select.innerHTML = allCategories.map(c => `
+          <option value="${c.name}">${c.name} (${c.count} prompts)</option>
+        `).join('');
+
+        // Update library filter dropdown
+        const libSelect = document.getElementById('lib-cat-filter');
+        libSelect.innerHTML = '<option value="all">All Categories</option>' + allCategories.map(c => `
+          <option value="${c.name}">${c.name}</option>
+        `).join('');
+
+        // Update categories table
+        const tbody = document.getElementById('categories-tbody');
+        tbody.innerHTML = allCategories.map(c => `
+          <tr>
+            <td><strong>${escapeHtml(c.name)}</strong></td>
+            <td><code>${c.slug}</code></td>
+            <td><span class="badge badge-active">${c.count} prompts</span></td>
+            <td>
+              <a href="/browse?cat=${encodeURIComponent(c.name)}" target="_blank" class="btn btn-sm btn-outline">View in Catalog</a>
+            </td>
+          </tr>
+        `).join('');
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function loadPrompts() {
+      try {
+        const res = await fetch('/api/prompts?limit=100');
+        const data = await res.json();
+        allPrompts = data.prompts || [];
+        renderLibraryTable();
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function renderLibraryTable() {
+      const q = (document.getElementById('lib-search').value || '').toLowerCase();
+      const cat = document.getElementById('lib-cat-filter').value;
+
+      const filtered = allPrompts.filter(p => {
+        const matchesQ = !q || p.title.toLowerCase().includes(q) || p.category.toLowerCase().includes(q);
+        const matchesCat = cat === 'all' || p.category === cat;
+        return matchesQ && matchesCat;
+      });
+
+      const tbody = document.getElementById('library-tbody');
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--muted);">No matching prompts found.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(p => `
+        <tr>
+          <td>
+            <img src="${p.thumbnail || '/assets/img/cover.jpg'}" alt="" style="width:60px;height:38px;object-fit:cover;border-radius:6px;">
+          </td>
+          <td>
+            <strong>${escapeHtml(p.title)}</strong>
+            <div style="font-size:12px;color:var(--muted);">ID: #${p.id}</div>
+          </td>
+          <td>
+            <span style="font-size:13px;font-weight:600;">📂 ${escapeHtml(p.category)}</span>
+          </td>
+          <td>
+            <span class="badge badge-tier-toggle ${p.type === 'free' ? 'badge-active' : ''}" onclick="togglePromptType(${p.id})">
+              ${p.type === 'free' ? '🎁 Free' : '⭐ Premium'}
+            </span>
+          </td>
+          <td style="font-size:12.5px;color:var(--muted);">
+            👁 ${p.views_count} · 📋 ${p.copies_count}
+          </td>
+          <td>
+            <div style="display:flex;gap:6px;">
+              <button type="button" class="btn btn-sm btn-outline" onclick="editPrompt(${p.id})">Edit</button>
+              <a href="/prompt?id=${p.id}" target="_blank" class="btn btn-sm btn-outline">View</a>
+              <button type="button" class="btn btn-sm btn-danger" onclick="deletePrompt(${p.id})">Del</button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    // Toggle Tab view
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === tabId);
+      });
+      document.querySelectorAll('.tab-pane').forEach(p => p.style.display = 'none');
+      document.getElementById(tabId).style.display = 'block';
+
+      if (tabId === 'tab-library') renderLibraryTable();
+      if (tabId === 'tab-community') loadCommunityPosts();
+    }
+
+    // Quick Templates
+    function injectTemplate(type) {
+      const textarea = document.getElementById('form-content');
+      let textToInsert = '';
+
+      switch (type) {
+        case 'timing':
+          textToInsert = `\n# TIMED SHOT LIST (30 SECONDS)\nSHOT 1 — 0.0-2.2s | 28mm | Opening Wide: Clean space for anomaly. Red circle lands.\nSHOT 2 — 2.2-5.5s | 85mm | Close the Gap: Focus on vulnerable character.\nSHOT 3 — 5.5-8.0s | 50mm | Problem Confirmed: Physical obstacle revealed.\nSHOT 4 — 8.0-14.5s | 40mm | Escalation: Situation intensifies.\nSHOT 5 — 14.5-20.5s | 85mm | Lowest Point: Emotional reaction, tear trembling.\nSHOT 6 — 20.5-22.5s | 35mm | False Ending: Viewer believes it is over.\nSHOT 7 — 22.5-25.0s | 50mm | Reversal: One believable act by stranger or authority.\nSHOT 8 — 25.0-27.5s | 40mm | Approach: Barrier removed.\nSHOT 9 — 27.5-30.0s | 40mm | Payoff: Final embrace and bold white End Card.\n`;
+          break;
+        case 'lens':
+          textToInsert = `\n# LENS LADDER & CAMERA SPEC\n- Opening Wide: 28mm (uncluttered background for red circle target)\n- Relationship / Context: 35mm-40mm (waist up framing)\n- Emotional Half: 85mm (eye to chin close-up, tears, micro-expressions)\n- Payoff Embrace: 40mm (both faces lit, shallow depth of field)\n`;
+          break;
+        case 'overlay':
+          textToInsert = `\n# ON-SCREEN OVERLAYS SPEC\n- RED CIRCLE: Frame 0.0s to 2.2s. Pure red #E8161A geometric circle, 10px stroke, transparent hollow centre. Positioned around key prop/anomaly. Does not obscure face.\n- END CARD: Final 1.5s (28.5s - 30.0s). Bold white capital word with thick black outline: "RESPECT" or "LOVE". Lower third, static.\n`;
+          break;
+        case 'audio':
+          textToInsert = `\n# AUDIO & ACOUSTIC SPEC\nNo narrator, no plot-carrying dialogue, no music.\nAmbient room tone: subtle fluorescent hum, distant footsteps, key rattle, fabric movement.\nEmotional beats: soft breath, sniff, muffled crying, hydraulic door closer sound.\n`;
+          break;
+        case 'negative':
+          textToInsert = `\n# NEGATIVE PROMPT BLOCK\nno face drift, no identity change between shots, no morphing, no duplicate people, no extra fingers, no fused hands, no warped anatomy, no plastic skin, no CGI look, no Unreal Engine, no anime, no cartoon, no unrequested text, no watermarks, no whip pans, no glitch transitions.\n`;
+          break;
+      }
+
+      textarea.value += textToInsert;
+      textarea.focus();
+    }
+
+    // Reset Form
+    function resetPromptForm() {
+      document.getElementById('prompt-studio-form').reset();
+      document.getElementById('edit-prompt-id').value = '';
+      document.getElementById('form-heading').textContent = '✨ Add New Viral Prompt';
+      document.getElementById('images-preview').innerHTML = '';
+      document.getElementById('form-submit-btn').textContent = '💾 Save & Publish Prompt';
+    }
+
+    // Load Prompt for Editing
+    async function editPrompt(id) {
+      try {
+        const res = await fetch(`/api/admin/prompts/${id}`);
+        const data = await res.json();
+        if (!data.prompt) return;
+
+        const p = data.prompt;
+        document.getElementById('edit-prompt-id').value = p.id;
+        document.getElementById('form-title').value = p.title;
+        document.getElementById('form-category').value = p.category;
+        document.getElementById('form-type').value = p.type;
+        document.getElementById('form-teaser').value = p.teaser || '';
+        document.getElementById('form-content').value = p.prompt_content;
+        document.getElementById('form-heading').textContent = `✏️ Edit Prompt #${p.id} — ${p.title}`;
+        document.getElementById('form-submit-btn').textContent = '💾 Update Prompt';
+
+        // Show image preview
+        const preview = document.getElementById('images-preview');
+        preview.innerHTML = (p.storyboards || []).map(img => `
+          <img src="${img}" class="preview-thumb" alt="Reference">
+        `).join('');
+
+        switchTab('tab-editor');
+      } catch (e) {
+        console.error('Error loading edit prompt:', e);
+      }
+    }
+
+    // Submit Prompt (Add or Edit)
+    document.getElementById('prompt-studio-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('form-submit-btn');
+      btn.disabled = true;
+      btn.textContent = 'Saving prompt…';
+
+      const editId = document.getElementById('edit-prompt-id').value;
+      const formData = new FormData();
+      formData.append('title', document.getElementById('form-title').value);
+      formData.append('category', document.getElementById('form-category').value);
+      formData.append('custom_category', document.getElementById('form-custom-category').value);
+      formData.append('type', document.getElementById('form-type').value);
+      formData.append('teaser', document.getElementById('form-teaser').value);
+      formData.append('prompt_content', document.getElementById('form-content').value);
+
+      const files = document.getElementById('form-storyboards').files;
+      for (let i = 0; i < files.length; i++) {
+        formData.append('storyboard_files', files[i]);
+      }
+
+      try {
+        const url = editId ? `/api/admin/prompts/${editId}` : '/api/admin/prompts';
+        const method = editId ? 'PUT' : 'POST';
+        const res = await fetch(url, { method, body: formData });
+        const data = await res.json();
+
+        if (data.success) {
+          window.NP.showToast(editId ? '✅ Prompt updated successfully!' : '🎉 Prompt published successfully!');
+          resetPromptForm();
+          await refreshDashboard();
+          switchTab('tab-library');
+        } else {
+          alert(data.error || 'Failed to save prompt.');
+        }
+      } catch (err) {
+        alert('Network error while saving prompt.');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = editId ? '💾 Update Prompt' : '💾 Save & Publish Prompt';
+      }
+    });
+
+    // Toggle Prompt Tier
+    async function togglePromptType(id) {
+      try {
+        const res = await fetch(`/api/admin/prompts/${id}/toggle-type`, { method: 'PATCH' });
+        const data = await res.json();
+        if (data.success) {
+          window.NP.showToast(`Switched to ${data.new_type.toUpperCase()}`);
+          await loadPrompts();
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    // Delete Prompt
+    async function deletePrompt(id) {
+      if (!confirm(`Are you sure you want to delete prompt #${id}?`)) return;
+      try {
+        await fetch(`/api/admin/prompts/${id}`, { method: 'DELETE' });
+        window.NP.showToast('🗑 Prompt deleted');
+        await refreshDashboard();
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    // Add Category
+    document.getElementById('add-cat-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const input = document.getElementById('new-cat-name');
+      const name = input.value.trim();
+      if (!name) return;
+
+      try {
+        const res = await fetch('/api/admin/categories', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name })
+        });
+        const data = await res.json();
+        if (data.success) {
+          window.NP.showToast(`✅ Added category: ${name}`);
+          input.value = '';
+          await refreshDashboard();
+        } else {
+          alert(data.error || 'Failed to add category');
         }
       } catch (e) {
         console.error(e);
       }
     });
 
-    async function loadAdminPrompts() {
-      const res = await fetch('/api/prompts?limit=50');
-      const data = await res.json();
-      const wrap = document.getElementById('admin-prompts-list');
-      wrap.innerHTML = data.prompts.map(p => `
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid #F1F0F5;">
-          <div>
-            <strong>#${p.id} ${escapeHtml(p.title)}</strong>
-            <div style="font-size:12.5px;color:var(--muted);">${p.category} · ${p.type.toUpperCase()} · 👁 ${p.views_count}</div>
-          </div>
-          <div style="display:flex;gap:8px;">
-            <a href="/prompt?id=${p.id}" class="btn btn-sm btn-outline">View</a>
-            <button type="button" class="btn btn-sm btn-danger" onclick="deletePrompt(${p.id})">Delete</button>
-          </div>
-        </div>
-      `).join('');
-    }
-
-    async function deletePrompt(id) {
-      if (!confirm(`Are you sure you want to delete prompt #${id}?`)) return;
-      await fetch(`/api/admin/prompts/${id}`, { method: 'DELETE' });
-      window.NP.showToast('Deleted prompt successfully');
-      loadAdminPrompts();
-    }
-
-    async function loadAdminUsers() {
-      const res = await fetch('/api/admin/users');
-      const data = await res.json();
-      const wrap = document.getElementById('admin-users-list');
-      wrap.innerHTML = `
-        <table style="width:100%;border-collapse:collapse;font-size:14px;text-align:left;">
-          <thead>
-            <tr style="border-bottom:2px solid var(--border);">
-              <th style="padding:8px;">ID</th>
-              <th style="padding:8px;">Name</th>
-              <th style="padding:8px;">Email</th>
-              <th style="padding:8px;">Role</th>
-              <th style="padding:8px;">Membership</th>
-              <th style="padding:8px;">Expiry</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${data.users.map(u => `
-              <tr style="border-bottom:1px solid var(--border);">
-                <td style="padding:8px;">#${u.id}</td>
-                <td style="padding:8px;"><strong>${escapeHtml(u.name)}</strong></td>
-                <td style="padding:8px;">${escapeHtml(u.email)}</td>
-                <td style="padding:8px;"><span class="badge">${u.role}</span></td>
-                <td style="padding:8px;"><span class="badge ${u.membership_status === 'premium' ? 'badge-active' : ''}">${u.membership_status}</span></td>
-                <td style="padding:8px;">${u.membership_expires_at || '—'}</td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      `;
-    }
-
-    document.getElementById('add-prompt-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const btn = document.getElementById('p-submit-btn');
-      btn.disabled = true;
-      btn.textContent = 'Publishing…';
-
-      const formData = new FormData();
-      formData.append('title', document.getElementById('p-title').value);
-      formData.append('category', document.getElementById('p-cat').value);
-      formData.append('type', document.getElementById('p-type').value);
-      formData.append('teaser', document.getElementById('p-teaser').value);
-      formData.append('prompt_content', document.getElementById('p-content').value);
-
-      const files = document.getElementById('p-storyboards').files;
-      for (let i = 0; i < files.length; i++) {
-        formData.append('storyboard_files', files[i]);
-      }
-
+    // Community Moderation
+    async function loadCommunityPosts() {
       try {
-        const res = await fetch('/api/admin/prompts', { method: 'POST', body: formData });
+        const res = await fetch('/api/community/posts');
         const data = await res.json();
-        if (data.success) {
-          window.NP.showToast('🎉 Prompt published successfully!');
-          document.getElementById('add-prompt-form').reset();
-          loadAdminPrompts();
-        } else {
-          alert(data.error || 'Failed to publish prompt.');
-        }
-      } catch (err) {
-        alert('Network error.');
-      } finally {
-        btn.disabled = false;
-        btn.textContent = 'Publish Prompt';
+        const wrap = document.getElementById('community-admin-list');
+
+        wrap.innerHTML = data.posts.map(p => `
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid #F1F0F5;">
+            <div>
+              <strong>${escapeHtml(p.author)}</strong> ${p.is_admin ? '<span class="badge" style="background:#DCFCE7;color:#15803D;">Creator</span>' : ''}
+              <p style="font-size:13.5px;margin-top:4px;color:var(--text-secondary);">${escapeHtml(p.content.slice(0, 120))}${p.content.length > 120 ? '…' : ''}</p>
+              <div style="font-size:12px;color:var(--muted);margin-top:4px;">❤️ ${p.likes} likes · 💬 ${(p.comments || []).length} comments</div>
+            </div>
+            <div>
+              <button type="button" class="btn btn-sm btn-danger" onclick="deleteCommunityPost(${p.id})">Delete Post</button>
+            </div>
+          </div>
+        `).join('');
+      } catch (e) {
+        console.error(e);
       }
-    });
+    }
+
+    async function deleteCommunityPost(id) {
+      if (!confirm(`Delete community post #${id}?`)) return;
+      await fetch(`/api/admin/community/posts/${id}`, { method: 'DELETE' });
+      window.NP.showToast('Post deleted');
+      await loadCommunityPosts();
+    }
+
+    // Filter events
+    document.getElementById('lib-search').addEventListener('input', renderLibraryTable);
+    document.getElementById('lib-cat-filter').addEventListener('change', renderLibraryTable);
 
     function escapeHtml(text) {
       if (!text) return '';
