@@ -1,0 +1,29 @@
+{
+  "name": "navprompts-ai-analyzer",
+  "version": "1.0.0",
+  "description": "Viral AI Video Prompts Platform - Soniprompts / NavPrompts",
+  "main": "server/app.js",
+  "scripts": {
+    "start": "node server/app.js",
+    "dev": "node server/app.js",
+    "test": "node test/verify.js"
+  },
+  "keywords": [
+    "ai-prompts",
+    "video-prompts",
+    "viral-prompts",
+    "seedance",
+    "kling",
+    "veo"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cookie-parser": "^1.4.6",
+    "express": "^4.19.2",
+    "express-session": "^1.18.0",
+    "multer": "^1.4.5-lts.1",
+    "sqlite3": "^5.1.7"
+  }
+}

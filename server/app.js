@@ -1,0 +1,682 @@
+const express = require('express');
+const session = require('express-session');
+const cookieParser = require('cookie-parser');
+const path = require('path');
+const fs = require('fs');
+const bcrypt = require('bcryptjs');
+const multer = require('multer');
+const { db, run, get, all, initDb } = require('./db');
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Setup upload storage
+const uploadsDir = path.join(__dirname, '..', 'public', 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, uploadsDir),
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    const uniqueName = Date.now() + '-' + Math.round(Math.random() * 1e9) + ext;
+    cb(null, uniqueName);
+  }
+});
+const upload = multer({
+  storage,
+  limits: { fileSize: 25 * 1024 * 1024 } // 25MB max
+});
+
+// Middlewares
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
+app.use(session({
+  secret: 'navprompts-secret-key-2026-super-secure',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+    httpOnly: true,
+    sameSite: 'lax'
+  }
+}));
+
+// Serve static assets
+app.use(express.static(path.join(__dirname, '..', 'public')));
+
+// Helper middleware to get current user
+async function getCurrentUser(req) {
+  if (!req.session || !req.session.userId) return null;
+  const user = await get(
+    `SELECT id, name, email, role, membership_status, membership_expires_at, created_at FROM users WHERE id = ?`,
+    [req.session.userId]
+  );
+  if (!user) return null;
+  
+  // Check if premium has expired
+  if (user.membership_status === 'premium' && user.membership_expires_at) {
+    const expiry = new Date(user.membership_expires_at);
+    if (expiry < new Date()) {
+      await run(`UPDATE users SET membership_status = 'free' WHERE id = ?`, [user.id]);
+      user.membership_status = 'free';
+    }
+  }
+  return user;
+}
+
+// ----------------------------------------------------
+// AUTH API
+// ----------------------------------------------------
+
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password are required.' });
+    }
+
+    const user = await get(`SELECT * FROM users WHERE email = ?`, [email.toLowerCase().trim()]);
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid email or password.' });
+    }
+
+    const isValid = await bcrypt.compare(password, user.password_hash);
+    if (!isValid) {
+      return res.status(401).json({ error: 'Invalid email or password.' });
+    }
+
+    req.session.userId = user.id;
+
+    res.json({
+      success: true,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        membership_status: user.membership_status,
+        membership_expires_at: user.membership_expires_at
+      }
+    });
+  } catch (err) {
+    console.error('Login error:', err);
+    res.status(500).json({ error: 'Internal server error.' });
+  }
+});
+
+app.post('/api/auth/register', async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
+    if (!name || !email || !password) {
+      return res.status(400).json({ error: 'All fields are required.' });
+    }
+    if (password.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters.' });
+    }
+
+    const existing = await get(`SELECT id FROM users WHERE email = ?`, [email.toLowerCase().trim()]);
+    if (existing) {
+      return res.status(400).json({ error: 'An account with this email already exists.' });
+    }
+
+    const hash = await bcrypt.hash(password, 10);
+    const result = await run(
+      `INSERT INTO users (name, email, password_hash, role, membership_status) VALUES (?, ?, ?, 'user', 'free')`,
+      [name.trim(), email.toLowerCase().trim(), hash]
+    );
+
+    req.session.userId = result.lastID;
+
+    res.json({
+      success: true,
+      user: {
+        id: result.lastID,
+        name: name.trim(),
+        email: email.toLowerCase().trim(),
+        role: 'user',
+        membership_status: 'free',
+        membership_expires_at: null
+      }
+    });
+  } catch (err) {
+    console.error('Register error:', err);
+    res.status(500).json({ error: 'Internal server error.' });
+  }
+});
+
+app.get('/api/auth/me', async (req, res) => {
+  try {
+    const user = await getCurrentUser(req);
+    res.json({ user: user || null });
+  } catch (err) {
+    res.status(500).json({ error: 'Error fetching user session.' });
+  }
+});
+
+app.post('/api/auth/logout', (req, res) => {
+  req.session.destroy(() => {
+    res.json({ success: true });
+  });
+});
+
+// ----------------------------------------------------
+// PROMPTS API
+// ----------------------------------------------------
+
+app.get('/api/prompts', async (req, res) => {
+  try {
+    const { q, type, cat, sort, limit = 20, offset = 0 } = req.query;
+    let sql = `SELECT id, title, category, type, thumbnail, teaser, storyboards, views_count, copies_count, created_at FROM prompts WHERE 1=1`;
+    const params = [];
+
+    if (q) {
+      sql += ` AND (title LIKE ? OR prompt_content LIKE ?)`;
+      params.push(`%${q}%`, `%${q}%`);
+    }
+
+    if (type && (type === 'free' || type === 'premium')) {
+      sql += ` AND type = ?`;
+      params.push(type);
+    }
+
+    if (cat && cat !== 'all') {
+      sql += ` AND category = ?`;
+      params.push(cat);
+    }
+
+    // Sorting
+    switch (sort) {
+      case 'old':
+        sql += ` ORDER BY id ASC`;
+        break;
+      case 'az':
+        sql += ` ORDER BY title ASC`;
+        break;
+      case 'za':
+        sql += ` ORDER BY title DESC`;
+        break;
+      case 'popular':
+        sql += ` ORDER BY copies_count DESC, views_count DESC`;
+        break;
+      case 'new':
+      default:
+        sql += ` ORDER BY id DESC`;
+        break;
+    }
+
+    sql += ` LIMIT ? OFFSET ?`;
+    params.push(parseInt(limit, 10), parseInt(offset, 10));
+
+    const prompts = await all(sql, params);
+
+    // Get total count
+    let countSql = `SELECT COUNT(*) as total FROM prompts WHERE 1=1`;
+    const countParams = [];
+    if (q) {
+      countSql += ` AND (title LIKE ? OR prompt_content LIKE ?)`;
+      countParams.push(`%${q}%`, `%${q}%`);
+    }
+    if (type && (type === 'free' || type === 'premium')) {
+      countSql += ` AND type = ?`;
+      countParams.push(type);
+    }
+    if (cat && cat !== 'all') {
+      countSql += ` AND category = ?`;
+      countParams.push(cat);
+    }
+    const countRow = await get(countSql, countParams);
+
+    res.json({
+      prompts: prompts.map(p => ({
+        ...p,
+        storyboards: p.storyboards ? JSON.parse(p.storyboards) : []
+      })),
+      total: countRow ? countRow.total : prompts.length,
+      has_more: (parseInt(offset, 10) + prompts.length) < (countRow ? countRow.total : 0)
+    });
+  } catch (err) {
+    console.error('Prompts list error:', err);
+    res.status(500).json({ error: 'Failed to fetch prompts.' });
+  }
+});
+
+app.get('/api/prompts/:id', async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    const prompt = await get(`SELECT * FROM prompts WHERE id = ?`, [id]);
+    if (!prompt) {
+      return res.status(404).json({ error: 'Prompt not found.' });
+    }
+
+    // Increment views
+    await run(`UPDATE prompts SET views_count = views_count + 1 WHERE id = ?`, [id]);
+
+    const user = await getCurrentUser(req);
+    const isPremiumUser = user && user.membership_status === 'premium';
+    const isUnlocked = prompt.type === 'free' || isPremiumUser;
+
+    const storyboards = prompt.storyboards ? JSON.parse(prompt.storyboards) : [];
+
+    // Gated response
+    if (!isUnlocked) {
+      return res.json({
+        id: prompt.id,
+        title: prompt.title,
+        category: prompt.category,
+        type: prompt.type,
+        thumbnail: prompt.thumbnail,
+        teaser: prompt.teaser,
+        views_count: prompt.views_count + 1,
+        copies_count: prompt.copies_count,
+        created_at: prompt.created_at,
+        is_unlocked: false,
+        requires_membership: true,
+        user_logged_in: !!user,
+        prompt_content: null,
+        storyboards: [] // hide full storyboard downloads if locked
+      });
+    }
+
+    // Unlocked response
+    res.json({
+      id: prompt.id,
+      title: prompt.title,
+      category: prompt.category,
+      type: prompt.type,
+      thumbnail: prompt.thumbnail,
+      teaser: prompt.teaser,
+      prompt_content: prompt.prompt_content,
+      storyboards,
+      views_count: prompt.views_count + 1,
+      copies_count: prompt.copies_count,
+      created_at: prompt.created_at,
+      is_unlocked: true,
+      requires_membership: false,
+      user_logged_in: !!user
+    });
+  } catch (err) {
+    console.error('Prompt detail error:', err);
+    res.status(500).json({ error: 'Failed to fetch prompt detail.' });
+  }
+});
+
+app.post('/api/prompts/:id/copy', async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    await run(`UPDATE prompts SET copies_count = copies_count + 1 WHERE id = ?`, [id]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Error updating copy count.' });
+  }
+});
+
+// ----------------------------------------------------
+// BOOKMARKS API
+// ----------------------------------------------------
+
+app.post('/api/prompts/:id/bookmark', async (req, res) => {
+  try {
+    const user = await getCurrentUser(req);
+    if (!user) return res.status(401).json({ error: 'Please login to save bookmarks.' });
+
+    const promptId = parseInt(req.params.id, 10);
+    const existing = await get(`SELECT id FROM bookmarks WHERE user_id = ? AND prompt_id = ?`, [user.id, promptId]);
+
+    if (existing) {
+      await run(`DELETE FROM bookmarks WHERE id = ?`, [existing.id]);
+      res.json({ bookmarked: false });
+    } else {
+      await run(`INSERT INTO bookmarks (user_id, prompt_id) VALUES (?, ?)`, [user.id, promptId]);
+      res.json({ bookmarked: true });
+    }
+  } catch (err) {
+    res.status(500).json({ error: 'Error toggling bookmark.' });
+  }
+});
+
+app.get('/api/prompts/:id/is-bookmarked', async (req, res) => {
+  try {
+    const user = await getCurrentUser(req);
+    if (!user) return res.json({ bookmarked: false });
+
+    const promptId = parseInt(req.params.id, 10);
+    const existing = await get(`SELECT id FROM bookmarks WHERE user_id = ? AND prompt_id = ?`, [user.id, promptId]);
+    res.json({ bookmarked: !!existing });
+  } catch (err) {
+    res.json({ bookmarked: false });
+  }
+});
+
+app.get('/api/bookmarks', async (req, res) => {
+  try {
+    const user = await getCurrentUser(req);
+    if (!user) return res.status(401).json({ error: 'Unauthorized.' });
+
+    const prompts = await all(`
+      SELECT p.id, p.title, p.category, p.type, p.thumbnail, p.teaser, p.created_at
+      FROM bookmarks b
+      JOIN prompts p ON b.prompt_id = p.id
+      WHERE b.user_id = ?
+      ORDER BY b.created_at DESC
+    `, [user.id]);
+
+    res.json({ prompts });
+  } catch (err) {
+    res.status(500).json({ error: 'Error fetching bookmarks.' });
+  }
+});
+
+// ----------------------------------------------------
+// CATEGORIES API
+// ----------------------------------------------------
+
+app.get('/api/categories', async (req, res) => {
+  try {
+    const rows = await all(`
+      SELECT c.name, c.slug, COUNT(p.id) as count
+      FROM categories c
+      LEFT JOIN prompts p ON c.name = p.category
+      GROUP BY c.id
+      ORDER BY count DESC, c.name ASC
+    `);
+    res.json({ categories: rows });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch categories.' });
+  }
+});
+
+// ----------------------------------------------------
+// COMMUNITY API
+// ----------------------------------------------------
+
+app.get('/api/community/posts', async (req, res) => {
+  try {
+    const user = await getCurrentUser(req);
+    const posts = await all(`
+      SELECT id, user_id, author, is_admin, content, media_url, likes, created_at
+      FROM community_posts
+      ORDER BY id DESC
+    `);
+
+    // Load comments and user like states
+    for (const post of posts) {
+      post.comments = await all(`
+        SELECT id, author, content, created_at
+        FROM community_comments
+        WHERE post_id = ?
+        ORDER BY id ASC
+      `, [post.id]);
+
+      if (user) {
+        const hasLiked = await get(`SELECT id FROM community_likes WHERE post_id = ? AND user_id = ?`, [post.id, user.id]);
+        post.has_liked = !!hasLiked;
+      } else {
+        post.has_liked = false;
+      }
+    }
+
+    res.json({ posts });
+  } catch (err) {
+    console.error('Community posts error:', err);
+    res.status(500).json({ error: 'Failed to load community feed.' });
+  }
+});
+
+app.post('/api/community/posts', upload.single('media'), async (req, res) => {
+  try {
+    const user = await getCurrentUser(req);
+    const authorName = user ? user.name : (req.body.author_name || 'Community Member');
+    const content = req.body.content;
+
+    if (!content || !content.trim()) {
+      return res.status(400).json({ error: 'Post content cannot be empty.' });
+    }
+
+    const mediaUrl = req.file ? `/uploads/${req.file.filename}` : null;
+    const isAdmin = user && user.role === 'admin' ? 1 : 0;
+
+    const result = await run(`
+      INSERT INTO community_posts (user_id, author, is_admin, content, media_url, likes)
+      VALUES (?, ?, ?, ?, ?, 0)
+    `, [user ? user.id : null, authorName, isAdmin, content.trim(), mediaUrl]);
+
+    res.json({
+      success: true,
+      post: {
+        id: result.lastID,
+        author: authorName,
+        is_admin: isAdmin,
+        content: content.trim(),
+        media_url: mediaUrl,
+        likes: 0,
+        comments: [],
+        created_at: new Date().toISOString()
+      }
+    });
+  } catch (err) {
+    console.error('Create post error:', err);
+    res.status(500).json({ error: 'Failed to create post.' });
+  }
+});
+
+app.post('/api/community/posts/:id/like', async (req, res) => {
+  try {
+    const user = await getCurrentUser(req);
+    if (!user) return res.status(401).json({ error: 'Please login to like posts.' });
+
+    const postId = parseInt(req.params.id, 10);
+    const existing = await get(`SELECT id FROM community_likes WHERE post_id = ? AND user_id = ?`, [postId, user.id]);
+
+    if (existing) {
+      await run(`DELETE FROM community_likes WHERE id = ?`, [existing.id]);
+      await run(`UPDATE community_posts SET likes = MAX(0, likes - 1) WHERE id = ?`, [postId]);
+      const updated = await get(`SELECT likes FROM community_posts WHERE id = ?`, [postId]);
+      res.json({ liked: false, likes: updated.likes });
+    } else {
+      await run(`INSERT INTO community_likes (post_id, user_id) VALUES (?, ?)`, [postId, user.id]);
+      await run(`UPDATE community_posts SET likes = likes + 1 WHERE id = ?`, [postId]);
+      const updated = await get(`SELECT likes FROM community_posts WHERE id = ?`, [postId]);
+      res.json({ liked: true, likes: updated.likes });
+    }
+  } catch (err) {
+    res.status(500).json({ error: 'Error toggling like.' });
+  }
+});
+
+app.post('/api/community/posts/:id/comments', async (req, res) => {
+  try {
+    const user = await getCurrentUser(req);
+    const author = user ? user.name : (req.body.author || 'Guest Member');
+    const content = req.body.content;
+    const postId = parseInt(req.params.id, 10);
+
+    if (!content || !content.trim()) {
+      return res.status(400).json({ error: 'Comment cannot be empty.' });
+    }
+
+    const result = await run(`
+      INSERT INTO community_comments (post_id, user_id, author, content)
+      VALUES (?, ?, ?, ?)
+    `, [postId, user ? user.id : null, author, content.trim()]);
+
+    res.json({
+      success: true,
+      comment: {
+        id: result.lastID,
+        post_id: postId,
+        author,
+        content: content.trim(),
+        created_at: new Date().toISOString()
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Error adding comment.' });
+  }
+});
+
+// ----------------------------------------------------
+// CHECKOUT & PAYMENT SIMULATION API
+// ----------------------------------------------------
+
+app.post('/api/checkout/create-order', async (req, res) => {
+  try {
+    const user = await getCurrentUser(req);
+    if (!user) return res.status(401).json({ error: 'Please login to subscribe.' });
+
+    const orderId = 'order_' + Math.random().toString(36).substring(2, 12);
+    res.json({
+      success: true,
+      order_id: orderId,
+      amount: 500, // 5.00 USD in cents
+      currency: 'USD',
+      user_name: user.name,
+      user_email: user.email,
+      key_id: 'rzp_live_simulated_key'
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Order creation failed.' });
+  }
+});
+
+app.post('/api/checkout/verify-payment', async (req, res) => {
+  try {
+    const user = await getCurrentUser(req);
+    if (!user) return res.status(401).json({ error: 'Please login to complete payment.' });
+
+    const { order_id, payment_id } = req.body;
+    const payId = payment_id || 'pay_' + Math.random().toString(36).substring(2, 14);
+
+    // Calculate 30 days ahead
+    const now = new Date();
+    const expiry = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+    const expiryStr = expiry.toISOString().replace('T', ' ').substring(0, 19);
+
+    // Record order
+    await run(`
+      INSERT INTO orders (user_id, order_id, payment_id, amount, currency, status)
+      VALUES (?, ?, ?, 5.00, 'USD', 'completed')
+    `, [user.id, order_id || 'manual_order', payId]);
+
+    // Activate membership
+    await run(`
+      UPDATE users SET membership_status = 'premium', membership_expires_at = ? WHERE id = ?
+    `, [expiryStr, user.id]);
+
+    res.json({
+      success: true,
+      message: 'Payment verified! Premium membership activated for 30 days.',
+      membership_status: 'premium',
+      membership_expires_at: expiryStr
+    });
+  } catch (err) {
+    console.error('Payment verification error:', err);
+    res.status(500).json({ error: 'Payment verification failed.' });
+  }
+});
+
+// ----------------------------------------------------
+// ADMIN API
+// ----------------------------------------------------
+
+async function requireAdmin(req, res, next) {
+  const user = await getCurrentUser(req);
+  if (!user || user.role !== 'admin') {
+    return res.status(403).json({ error: 'Admin access required.' });
+  }
+  next();
+}
+
+app.post('/api/admin/prompts', requireAdmin, upload.array('storyboard_files', 8), async (req, res) => {
+  try {
+    const { title, category, type = 'premium', prompt_content, teaser } = req.body;
+    if (!title || !prompt_content) {
+      return res.status(400).json({ error: 'Title and prompt content are required.' });
+    }
+
+    const storyboards = (req.files || []).map(f => `/uploads/${f.filename}`);
+    const thumbnail = storyboards[0] || '';
+
+    const result = await run(`
+      INSERT INTO prompts (title, category, type, prompt_content, teaser, thumbnail, storyboards, views_count, copies_count)
+      VALUES (?, ?, ?, ?, ?, ?, ?, 0, 0)
+    `, [
+      title.trim(),
+      category || 'General',
+      type,
+      prompt_content.trim(),
+      teaser || 'New viral AI video prompt package.',
+      thumbnail,
+      JSON.stringify(storyboards)
+    ]);
+
+    res.json({ success: true, prompt_id: result.lastID });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to create prompt.' });
+  }
+});
+
+app.delete('/api/admin/prompts/:id', requireAdmin, async (req, res) => {
+  try {
+    await run(`DELETE FROM prompts WHERE id = ?`, [parseInt(req.params.id, 10)]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to delete prompt.' });
+  }
+});
+
+app.delete('/api/admin/community/posts/:id', requireAdmin, async (req, res) => {
+  try {
+    await run(`DELETE FROM community_posts WHERE id = ?`, [parseInt(req.params.id, 10)]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to delete community post.' });
+  }
+});
+
+app.get('/api/admin/users', requireAdmin, async (req, res) => {
+  try {
+    const users = await all(`SELECT id, name, email, role, membership_status, membership_expires_at, created_at FROM users ORDER BY id DESC`);
+    res.json({ users });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to list users.' });
+  }
+});
+
+// ----------------------------------------------------
+// PAGE ROUTING & HTML FALLBACKS
+// ----------------------------------------------------
+
+const publicDir = path.join(__dirname, '..', 'public');
+
+app.get(['/', '/index.php'], (req, res) => res.sendFile(path.join(publicDir, 'index.html')));
+app.get(['/browse', '/browse.php'], (req, res) => res.sendFile(path.join(publicDir, 'browse.html')));
+app.get(['/prompt', '/prompt.php'], (req, res) => res.sendFile(path.join(publicDir, 'prompt.html')));
+app.get(['/community', '/community.php'], (req, res) => res.sendFile(path.join(publicDir, 'community.html')));
+app.get(['/pricing', '/pricing.php'], (req, res) => res.sendFile(path.join(publicDir, 'pricing.html')));
+app.get(['/account', '/account.php'], (req, res) => res.sendFile(path.join(publicDir, 'account.html')));
+app.get(['/login', '/login.php'], (req, res) => res.sendFile(path.join(publicDir, 'login.html')));
+app.get(['/register', '/register.php'], (req, res) => res.sendFile(path.join(publicDir, 'register.html')));
+app.get(['/admin', '/admin.php'], (req, res) => res.sendFile(path.join(publicDir, 'admin.html')));
+app.get(['/contact', '/contact.php'], (req, res) => res.sendFile(path.join(publicDir, 'contact.html')));
+app.get(['/terms', '/terms.php'], (req, res) => res.sendFile(path.join(publicDir, 'terms.html')));
+app.get(['/privacy', '/privacy.php'], (req, res) => res.sendFile(path.join(publicDir, 'privacy.html')));
+app.get(['/refund', '/refund.php'], (req, res) => res.sendFile(path.join(publicDir, 'refund.html')));
+
+// Fallback for clean 404 or index
+app.use((req, res) => {
+  res.status(404).sendFile(path.join(publicDir, 'index.html'));
+});
+
+// Start server
+initDb().then(() => {
+  app.listen(PORT, () => {
+    console.log(`\n🚀 NavPrompts Server running at http://localhost:${PORT}`);
+  });
+}).catch(err => {
+  console.error('Fatal DB error on startup:', err);
+});
+
+module.exports = app;

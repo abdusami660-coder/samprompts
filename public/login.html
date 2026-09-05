@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login — NavPrompts</title>
+  <meta name="description" content="Sign in to your NavPrompts member account.">
+  <link rel="icon" type="image/png" href="/assets/img/logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/css/style.css">
+</head>
+<body>
+
+  <!-- Site Header -->
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="/" class="brand">
+        <img src="/assets/img/logo.png" alt="NavPrompts Logo">
+        <span>Nav<b>Prompts</b></span>
+      </a>
+      <input type="checkbox" id="nav-toggle" class="nav-toggle-cb">
+      <label for="nav-toggle" class="nav-toggle">☰</label>
+      <nav class="main-nav" id="main-nav">
+        <!-- Dynamic header -->
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+      <div class="auth-box">
+        <h1>Welcome Back</h1>
+        <p class="sub">Log in to access viral AI video prompts</p>
+
+        <!-- Pre-filled Credentials Banner -->
+        <div style="background:#F3F0FF;border:1px solid #DDD6FE;border-radius:12px;padding:12px 14px;margin-bottom:20px;font-size:13px;color:#5B21B6;">
+          <strong>🔑 Your Pre-Configured Credentials:</strong><br>
+          Email: <code>abdusami660@gmail.com</code><br>
+          Password: <code>Sami1234!</code>
+          <div style="margin-top:8px;">
+            <button type="button" id="fill-sami-btn" class="btn btn-sm btn-outline" style="font-size:12px;padding:4px 10px;">
+              ⚡ Auto-Fill Sami Credentials
+            </button>
+          </div>
+        </div>
+
+        <div id="login-alert" class="alert-msg"></div>
+
+        <form id="login-form">
+          <div class="fld">
+            <label>Email Address</label>
+            <input type="email" id="login-email" required placeholder="your@email.com">
+          </div>
+          <div class="fld">
+            <label>Password</label>
+            <input type="password" id="login-password" required placeholder="••••••••">
+          </div>
+          <button type="submit" id="login-submit-btn" class="btn btn-primary btn-block btn-lg">
+            Login with Password
+          </button>
+        </form>
+
+        <p class="auth-alt">
+          Don't have an account? <a href="/register">Create an account</a>
+        </p>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div class="f-left">
+        <div class="footer-brand">
+          <img src="/assets/img/logo.png" alt="NavPrompts Logo">
+          <span>Nav<b>Prompts</b></span>
+        </div>
+        <p class="footer-tag">Viral AI video prompts by Shailendra Soni</p>
+      </div>
+      <nav class="footer-nav f-center">
+        <a href="/browse">All Prompts</a>
+        <span class="footer-dot">·</span>
+        <a href="/community">Social Corner</a>
+        <span class="footer-dot">·</span>
+        <a href="/pricing">Join Community</a>
+        <span class="footer-dot">·</span>
+        <a href="/privacy">Privacy</a>
+        <span class="footer-dot">·</span>
+        <a href="/terms">Terms</a>
+      </nav>
+      <div class="f-right">
+        <p class="footer-copy">© 2026 NavPrompts</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/assets/js/main.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const emailInput = document.getElementById('login-email');
+      const passInput = document.getElementById('login-password');
+      const form = document.getElementById('login-form');
+      const alertBox = document.getElementById('login-alert');
+      const submitBtn = document.getElementById('login-submit-btn');
+
+      // Autofill button
+      document.getElementById('fill-sami-btn').addEventListener('click', () => {
+        emailInput.value = 'abdusami660@gmail.com';
+        passInput.value = 'Sami1234!';
+      });
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        alertBox.style.display = 'none';
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Authenticating…';
+
+        try {
+          const res = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              email: emailInput.value.trim(),
+              password: passInput.value
+            })
+          });
+
+          const data = await res.json();
+          if (data.success) {
+            alertBox.className = 'alert-msg success';
+            alertBox.textContent = '✅ Login successful! Redirecting…';
+            alertBox.style.display = 'block';
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const next = urlParams.get('next') || '/account';
+            setTimeout(() => {
+              window.location.href = next;
+            }, 800);
+          } else {
+            alertBox.className = 'alert-msg error';
+            alertBox.textContent = data.error || 'Invalid credentials.';
+            alertBox.style.display = 'block';
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Login with Password';
+          }
+        } catch (err) {
+          alertBox.className = 'alert-msg error';
+          alertBox.textContent = 'Network error. Please try again.';
+          alertBox.style.display = 'block';
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Login with Password';
+        }
+      });
+    });
+  </script>
+</body>
+</html>
