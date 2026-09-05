@@ -170,8 +170,30 @@ cartoon, blurry, low resolution, bad hands, distorted faces, watermark, flickeri
   assert(postData.posts.length > 0, 'Community posts must exist');
   console.log(`   ✓ Loaded ${postData.posts.length} community posts.\n`);
 
+  // 15. Dark / Light Mode Theme System & Assets Integration
+  console.log('15. Testing Dark / Light Mode Theme System & Assets Integration...');
+  const cssRes = await fetch(BASE + '/assets/css/style.css');
+  const cssContent = await cssRes.text();
+  assert(cssContent.includes('html[data-theme="dark"]'), 'Dark theme selector missing in CSS');
+  assert(cssContent.includes('html[data-theme="light"]'), 'Light theme selector missing in CSS');
+  assert(cssContent.includes('--accent-gradient'), 'Accent gradient missing in CSS');
+  assert(cssContent.includes('.theme-toggle-btn'), 'Theme toggle button styles missing in CSS');
+
+  const jsRes = await fetch(BASE + '/assets/js/main.js');
+  const jsContent = await jsRes.text();
+  assert(jsContent.includes('initTheme'), 'initTheme missing in main.js');
+  assert(jsContent.includes('toggleTheme'), 'toggleTheme missing in main.js');
+  assert(jsContent.includes('setupThemeToggle'), 'setupThemeToggle missing in main.js');
+
+  for (const r of routes) {
+    const pageHtml = await (await fetch(BASE + r)).text();
+    assert(pageHtml.includes('theme-toggle-btn'), `Page ${r} missing theme-toggle-btn`);
+    assert(pageHtml.includes('sami_theme'), `Page ${r} missing anti-FOUC script`);
+  }
+  console.log('   ✓ Dark and Light themes verified across all CSS tokens, JS engines, and 8 HTML pages.\n');
+
   console.log('═══════════════════════════════════════════════════════════');
-  console.log('🎉 ALL 14 TEST SUITE ASSERTIONS PASSED WITH FLYING COLORS! 🚀');
+  console.log('🎉 ALL 15 TEST SUITE ASSERTIONS PASSED WITH FLYING COLORS! 🚀');
   console.log('═══════════════════════════════════════════════════════════\n');
 }
 

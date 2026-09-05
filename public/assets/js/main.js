@@ -8,12 +8,94 @@
   window.NP = {
     user: null,
     async init() {
+      this.initTheme();
       await this.checkAuth();
       this.initHeader();
       this.initSlider();
       this.initLightbox();
       this.initCopyButtons();
       this.initShareButtons();
+    },
+
+    initTheme() {
+      const stored = localStorage.getItem('sami_theme');
+      const theme = stored || 'dark';
+      this.applyTheme(theme, false);
+      this.setupThemeToggle();
+    },
+
+    applyTheme(theme, animate = true) {
+      if (animate) {
+        document.documentElement.classList.add('theme-animating');
+        clearTimeout(this._animTimer);
+        this._animTimer = setTimeout(() => {
+          document.documentElement.classList.remove('theme-animating');
+        }, 350);
+      }
+      document.documentElement.setAttribute('data-theme', theme);
+      localStorage.setItem('sami_theme', theme);
+      this.updateThemeButton(theme);
+    },
+
+    toggleTheme() {
+      const current = document.documentElement.getAttribute('data-theme') || 'dark';
+      const next = current === 'dark' ? 'light' : 'dark';
+      this.applyTheme(next, true);
+      this.showToast(next === 'dark' ? '🌙 Dark Mode Activated' : '☀️ Light Mode Activated');
+    },
+
+    updateThemeButton(theme) {
+      const btns = document.querySelectorAll('.theme-toggle-btn');
+      btns.forEach(btn => {
+        const text = btn.querySelector('.theme-text');
+        if (text) {
+          text.textContent = theme === 'dark' ? 'Dark' : 'Light';
+        }
+        btn.setAttribute('title', `Current: ${theme === 'dark' ? 'Dark' : 'Light'} Mode (Click to switch)`);
+      });
+    },
+
+    setupThemeToggle() {
+      const headerInner = document.querySelector('.header-inner');
+      if (!headerInner) return;
+
+      let wrap = headerInner.querySelector('.header-actions');
+      if (!wrap) {
+        wrap = document.createElement('div');
+        wrap.className = 'header-actions';
+        wrap.innerHTML = `
+          <button id="theme-toggle-btn" class="theme-toggle-btn" type="button" aria-label="Toggle Dark/Light Mode" title="Toggle Theme">
+            <span class="theme-icon moon-icon">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M12.3 2a10 10 0 0 0-.19 20 10 10 0 0 0 8.09-4.11 1 1 0 0 0-1-1.49 8 8 0 1 1-8.39-14.3 1 1 0 0 0 .49-1.1 1 1 0 0 0-1-.02z"/></svg>
+            </span>
+            <span class="theme-icon sun-icon">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="5"></circle>
+                <line x1="12" y1="1" x2="12" y2="3"></line>
+                <line x1="12" y1="21" x2="12" y2="23"></line>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                <line x1="1" y1="12" x2="3" y2="12"></line>
+                <line x1="21" y1="12" x2="23" y2="12"></line>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+              </svg>
+            </span>
+            <span class="theme-text">Theme</span>
+          </button>
+        `;
+        headerInner.appendChild(wrap);
+      }
+
+      const current = document.documentElement.getAttribute('data-theme') || 'dark';
+      this.updateThemeButton(current);
+
+      document.querySelectorAll('.theme-toggle-btn').forEach(btn => {
+        btn.onclick = (e) => {
+          e.preventDefault();
+          this.toggleTheme();
+        };
+      });
     },
 
     async checkAuth() {
