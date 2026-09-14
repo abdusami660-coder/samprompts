@@ -61,18 +61,6 @@
         <h1>Welcome Back</h1>
         <p class="sub">Log in to your Sami Prompts Studio</p>
 
-        <!-- Pre-filled Credentials Banner -->
-        <div style="background:var(--primary-light);border:1px solid var(--card-border);border-radius:12px;padding:12px 14px;margin-bottom:20px;font-size:13px;color:var(--text);">
-          <strong style="color:var(--primary);">👑 Sami's Creator Credentials:</strong><br>
-          Email: <code>abdusami660@gmail.com</code><br>
-          Password: <code>Sami1234!</code>
-          <div style="margin-top:8px;">
-            <button type="button" id="fill-sami-btn" class="btn btn-sm btn-outline" style="font-size:12px;padding:4px 10px;">
-              ⚡ Auto-Fill Credentials
-            </button>
-          </div>
-        </div>
-
         <div id="login-alert" class="alert-msg"></div>
 
         <form id="login-form">
@@ -131,12 +119,6 @@
       const form = document.getElementById('login-form');
       const alertBox = document.getElementById('login-alert');
       const submitBtn = document.getElementById('login-submit-btn');
-
-      // Autofill button
-      document.getElementById('fill-sami-btn').addEventListener('click', () => {
-        emailInput.value = 'abdusami660@gmail.com';
-        passInput.value = 'Sami1234!';
-      });
 
       form.addEventListener('submit', async (e) => {
         e.preventDefault();
