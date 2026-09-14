@@ -181,77 +181,60 @@ async function initDb() {
     console.log("Seeding community posts...");
     await seedCommunity();
   }
+
+  // Check if social_accounts table exists and seed if empty
+  await run(`
+    CREATE TABLE IF NOT EXISTS social_accounts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER,
+      platform TEXT NOT NULL,
+      account_name TEXT NOT NULL,
+      handle TEXT NOT NULL,
+      profile_url TEXT NOT NULL,
+      followers_count INTEGER DEFAULT 0,
+      following_count INTEGER DEFAULT 0,
+      posts_count INTEGER DEFAULT 0,
+      total_views INTEGER DEFAULT 0,
+      engagement_rate REAL DEFAULT 0.0,
+      category TEXT DEFAULT 'AI Video & Prompts',
+      goal_target INTEGER DEFAULT 100000,
+      monthly_growth INTEGER DEFAULT 0,
+      status TEXT DEFAULT 'active',
+      notes TEXT,
+      history TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  const existingSocial = await get(`SELECT COUNT(*) as cnt FROM social_accounts`);
+  if (!existingSocial || existingSocial.cnt === 0) {
+    console.log("Seeding initial social accounts portfolio...");
+    await seedSocialAccounts();
+  }
 }
 
 async function seedPrompts() {
-  const datasetPath = 'C:/Users/ML/.gemini/antigravity-ide/brain/e71b4ae9-aa1d-449a-9f24-f80cf10adef3/scratch/prompts_dataset.json';
+  const datasetPath = path.join(__dirname, 'prompts_dataset_full.json');
   if (!fs.existsSync(datasetPath)) {
-    console.log("prompts_dataset.json not found, using fallback prompts.");
+    console.log("prompts_dataset_full.json not found, skipping seeding.");
     return;
   }
 
   const raw = fs.readFileSync(datasetPath, 'utf8');
   const prompts = JSON.parse(raw);
 
-  const thumbMapping = {
-    '270': 'c7c5ce2f29fdf9f62e2a2545.png',
-    '264': 'dbe9af5b03ccb2169b2cea73.png',
-    '255': '1dbf63269502e5f615d2f447.png',
-    '246': 'c37a412728d35e531481d227.png',
-    '282': 'a2ede462c16c58f6d48211c0.png',
-    '281': '926cf2e4733cbb24b7e059a2.png',
-    '280': 'f0d86bb85606e86cd901a2fc.png',
-    '279': '3f566f82167873056e28bc52.png',
-    '278': '0fd79ae859b0e0be3d3bddd7.png',
-    '277': '97f21cf388255071b8e19356.png',
-    '276': 'e79fe608fdb1d406e8472ef6.png',
-    '275': 'a2088fa661997ec76f927df3.png',
-    '274': '83582f661461f3401b0d347c.png',
-    '273': '87b8a05a29c0fbfc2fa46e74.png',
-    '272': '69e1b66e6eb6084b90980125.png',
-    '271': 'b38896d306fab2115c65f280.png'
-  };
-
-  const categoryMapping = {
-    '270': 'Animal & Pets',
-    '264': 'Art & Animation',
-    '255': 'Art & Animation',
-    '246': 'Comedy & Entertainment',
-    '282': 'Emotional & Inspirational',
-    '281': 'ASMR & Satisfying',
-    '280': 'Nature & Wildlife',
-    '279': 'Fantasy & Sci-Fi',
-    '278': 'Fantasy & Sci-Fi',
-    '277': 'Kids & Family',
-    '276': 'Emotional & Inspirational',
-    '275': 'Historical & Nostalgia',
-    '274': 'Kids & Family',
-    '273': 'Nature & Wildlife',
-    '272': 'DIY & Crafts',
-    '271': 'Food & Cooking'
-  };
-
-  const freeIds = new Set(['270', '264', '255', '246']);
-
   for (const item of prompts) {
     const pid = parseInt(item.id, 10);
-    const title = item.title.replace(/&amp;/g, '&');
-    const isFree = freeIds.has(String(item.id));
-    const type = isFree ? 'free' : 'premium';
-    const category = categoryMapping[String(item.id)] || 'General';
-    const thumbFilename = thumbMapping[String(item.id)] || (item.storyboards[0] ? path.basename(item.storyboards[0].split('?')[0]) : '');
-    const thumbnail = thumbFilename ? `/uploads/${thumbFilename}` : '';
-    
-    // Clean local paths for storyboards
-    const cleanStoryboards = (item.storyboards || []).map(url => {
-      const f = path.basename(url.split('?')[0]);
-      return `/uploads/${f}`;
-    });
-
+    const title = (item.title || `Prompt #${pid}`).replace(/&amp;/g, '&');
+    const type = item.type || 'premium';
+    const category = item.category || 'General';
+    const thumbnail = item.thumbnail || '';
+    const storyboards = Array.isArray(item.storyboards) ? item.storyboards : [];
     const teaser = item.teaser || `This ${type} prompt includes the complete master prompt system — full scene structure, camera angles, timing breakdown, captions, viral hooks and reference storyboard images. Everything is ready to copy and paste into your AI video tool (Seedance, Kling, Veo, Dreamina).`;
 
     await run(`
-      INSERT INTO prompts (id, title, category, type, prompt_content, teaser, thumbnail, storyboards, views_count, copies_count)
+      INSERT OR REPLACE INTO prompts (id, title, category, type, prompt_content, teaser, thumbnail, storyboards, views_count, copies_count)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
       pid,
@@ -261,7 +244,7 @@ async function seedPrompts() {
       item.prompt_content,
       teaser,
       thumbnail,
-      JSON.stringify(cleanStoryboards),
+      JSON.stringify(storyboards),
       Math.floor(Math.random() * 200) + 50,
       Math.floor(Math.random() * 80) + 20
     ]);
@@ -270,7 +253,7 @@ async function seedPrompts() {
 }
 
 async function seedCommunity() {
-  const communityPath = 'C:/Users/ML/.gemini/antigravity-ide/brain/e71b4ae9-aa1d-449a-9f24-f80cf10adef3/scratch/community_dataset.json';
+  const communityPath = path.join(__dirname, 'community_dataset.json');
   if (!fs.existsSync(communityPath)) return;
 
   const raw = fs.readFileSync(communityPath, 'utf8');
@@ -297,6 +280,148 @@ async function seedCommunity() {
     }
   }
   console.log(`Seeded ${posts.length} community posts!`);
+}
+
+async function seedSocialAccounts() {
+  const defaultAccounts = [
+    {
+      platform: 'tiktok',
+      account_name: 'Sami Prompts TikTok',
+      handle: '@samiprompts',
+      profile_url: 'https://www.tiktok.com/@samiprompts',
+      followers_count: 384500,
+      following_count: 142,
+      posts_count: 186,
+      total_views: 12400000,
+      engagement_rate: 6.8,
+      category: 'Viral AI Videos',
+      goal_target: 500000,
+      monthly_growth: 32000,
+      status: 'growing',
+      notes: 'Primary short-form viral funnel for Kling & Seedance 2.0 prompts.',
+      history: JSON.stringify([
+        { month: 'Apr', followers: 210000, views: 5200000 },
+        { month: 'May', followers: 255000, views: 6800000 },
+        { month: 'Jun', followers: 298000, views: 8400000 },
+        { month: 'Jul', followers: 332000, views: 9900000 },
+        { month: 'Aug', followers: 361000, views: 11200000 },
+        { month: 'Sep', followers: 384500, views: 12400000 }
+      ])
+    },
+    {
+      platform: 'youtube',
+      account_name: 'Sami AI Cinema',
+      handle: '@samiprompts',
+      profile_url: 'https://www.youtube.com/@samiprompts',
+      followers_count: 94200,
+      following_count: 65,
+      posts_count: 92,
+      total_views: 6800000,
+      engagement_rate: 5.4,
+      category: 'Cinematic Tutorials',
+      goal_target: 100000,
+      monthly_growth: 8400,
+      status: 'active',
+      notes: 'Targeting 100K Silver Creator Award milestone by Q4.',
+      history: JSON.stringify([
+        { month: 'Apr', followers: 54000, views: 3100000 },
+        { month: 'May', followers: 62500, views: 3900000 },
+        { month: 'Jun', followers: 71000, views: 4700000 },
+        { month: 'Jul', followers: 79200, views: 5400000 },
+        { month: 'Aug', followers: 87100, views: 6100000 },
+        { month: 'Sep', followers: 94200, views: 6800000 }
+      ])
+    },
+    {
+      platform: 'instagram',
+      account_name: 'Sami Prompts Studio',
+      handle: '@sami.prompts',
+      profile_url: 'https://www.instagram.com/sami.prompts',
+      followers_count: 48600,
+      following_count: 310,
+      posts_count: 124,
+      total_views: 2400000,
+      engagement_rate: 4.9,
+      category: 'Reels & Storyboards',
+      goal_target: 500000,
+      monthly_growth: 4200,
+      status: 'active',
+      notes: 'Showcasing 4K storyboard image packs and prompt carousels.',
+      history: JSON.stringify([
+        { month: 'Apr', followers: 28000, views: 1100000 },
+        { month: 'May', followers: 32400, views: 1350000 },
+        { month: 'Jun', followers: 36800, views: 1650000 },
+        { month: 'Jul', followers: 41200, views: 1900000 },
+        { month: 'Aug', followers: 45100, views: 2150000 },
+        { month: 'Sep', followers: 48600, views: 2400000 }
+      ])
+    },
+    {
+      platform: 'facebook',
+      account_name: 'Sami AI Video Creators',
+      handle: 'SamiPromptsOfficial',
+      profile_url: 'https://www.facebook.com/som.soni.965',
+      followers_count: 29400,
+      following_count: 45,
+      posts_count: 88,
+      total_views: 1100000,
+      engagement_rate: 3.8,
+      category: 'Creator Community',
+      goal_target: 50000,
+      monthly_growth: 2100,
+      status: 'active',
+      notes: 'Facebook page and group for AI video makers.',
+      history: JSON.stringify([
+        { month: 'Apr', followers: 18000, views: 550000 },
+        { month: 'May', followers: 20500, views: 680000 },
+        { month: 'Jun', followers: 23100, views: 800000 },
+        { month: 'Jul', followers: 25400, views: 910000 },
+        { month: 'Aug', followers: 27500, views: 1010000 },
+        { month: 'Sep', followers: 29400, views: 1100000 }
+      ])
+    },
+    {
+      platform: 'twitter',
+      account_name: 'Sami AI Prompts',
+      handle: '@samiai_prompts',
+      profile_url: 'https://twitter.com/samiai_prompts',
+      followers_count: 16800,
+      following_count: 215,
+      posts_count: 420,
+      total_views: 890000,
+      engagement_rate: 4.2,
+      category: 'AI News & Drops',
+      goal_target: 25000,
+      monthly_growth: 1500,
+      status: 'active',
+      notes: 'Fast prompt updates, viral video breakdowns, and AI tool announcements.',
+      history: JSON.stringify([
+        { month: 'Apr', followers: 9800, views: 420000 },
+        { month: 'May', followers: 11200, views: 510000 },
+        { month: 'Jun', followers: 12600, views: 600000 },
+        { month: 'Jul', followers: 14100, views: 710000 },
+        { month: 'Aug', followers: 15500, views: 800000 },
+        { month: 'Sep', followers: 16800, views: 890000 }
+      ])
+    }
+  ];
+
+  for (const acc of defaultAccounts) {
+    await run(`
+      INSERT INTO social_accounts (
+        user_id, platform, account_name, handle, profile_url,
+        followers_count, following_count, posts_count, total_views,
+        engagement_rate, category, goal_target, monthly_growth,
+        status, notes, history
+      ) VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `, [
+      acc.platform, acc.account_name, acc.handle, acc.profile_url,
+      acc.followers_count, acc.following_count, acc.posts_count, acc.total_views,
+      acc.engagement_rate, acc.category, acc.goal_target, acc.monthly_growth,
+      acc.status, acc.notes, acc.history
+    ]);
+  }
+  console.log(`Seeded ${defaultAccounts.length} social accounts into portfolio!`);
 }
 
 module.exports = {

@@ -213,26 +213,50 @@
           return;
         }
 
-        const cardsHtml = data.prompts.map(p => `
-          <a class="pcard" href="/prompt?id=${p.id}">
-            <div class="pcard-thumb">
-              <img src="${p.thumbnail || '/assets/img/cover.jpg'}" alt="${p.title}" loading="lazy">
-              <span class="pcard-badge ${p.type}">
-                ${p.type === 'free' ? '🎁 Free' : '⭐ Premium'}
-              </span>
-            </div>
-            <div class="pcard-body">
-              <h3>${p.title}</h3>
-              <span class="pcard-cat">📂 ${p.category}</span>
-              <div class="pcard-foot">
-                <span style="font-size:12.5px;color:var(--muted);">👁 ${p.views_count} · 📋 ${p.copies_count}</span>
-                <span class="btn btn-sm ${p.type === 'free' ? 'btn-outline' : 'btn-primary'}">
-                  ${p.type === 'free' ? 'Get Access' : 'Unlock'}
-                </span>
+        const cardsHtml = data.prompts.map(p => {
+          const isFree = p.type === 'free';
+          const badgeClass = isFree ? 'pcard-badge-free' : 'pcard-badge-vip';
+          const badgeText = isFree ? '🎁 Free' : '👑 VIP';
+
+          let tool = '🎬 Kling AI';
+          const text = (p.title + ' ' + (p.prompt_content || '')).toLowerCase();
+          if (text.includes('seedance')) tool = '⚡ Seedance 2.0';
+          else if (text.includes('veo')) tool = '🎥 Google Veo';
+          else if (text.includes('sora')) tool = '🌟 OpenAI Sora';
+          else if (text.includes('kling')) tool = '🎬 Kling AI';
+          else if (text.includes('dreamina') || text.includes('luma')) tool = '✨ Luma Dream';
+
+          return `
+            <div class="pcard">
+              <a href="/prompt?id=${p.id}" class="pcard-thumb">
+                <img src="${p.thumbnail || '/assets/img/cover.jpg'}" alt="${p.title}" loading="lazy">
+                <span class="${badgeClass}">${badgeText}</span>
+                <span class="pcard-tool-tag">${tool}</span>
+              </a>
+              <div class="pcard-body">
+                <span class="pcard-cat-tag">📂 ${p.category}</span>
+                <h3 class="pcard-title">
+                  <a href="/prompt?id=${p.id}" style="color:inherit;text-decoration:none;">${p.title}</a>
+                </h3>
+                <p class="pcard-teaser">${p.teaser || 'Complete AI video master prompt system with camera setups, lighting, timing and reference storyboards.'}</p>
+                <div class="pcard-footer">
+                  <div class="pcard-stats">
+                    <span>👁️ ${p.views_count || 0}</span>
+                    <span>📋 ${p.copies_count || 0}</span>
+                  </div>
+                  <div class="pcard-actions">
+                    <button type="button" class="quick-copy-btn" data-prompt-id="${p.id}" title="1-Click Copy Master Prompt">
+                      📋 Copy
+                    </button>
+                    <a href="/prompt?id=${p.id}" class="btn btn-sm ${isFree ? 'btn-outline' : 'btn-primary'}" style="padding:6px 12px;font-size:12px;">
+                      View →
+                    </a>
+                  </div>
+                </div>
               </div>
             </div>
-          </a>
-        `).join('');
+          `;
+        }).join('');
 
         grid.insertAdjacentHTML('beforeend', cardsHtml);
 

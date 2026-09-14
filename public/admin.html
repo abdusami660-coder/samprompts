@@ -79,9 +79,9 @@
       margin-bottom: 12px;
     }
     .tchip {
-      background: #F3F0FF;
-      border: 1px solid #DDD6FE;
-      color: #6D28D9;
+      background: var(--primary-light);
+      border: 1px solid var(--card-border);
+      color: var(--primary);
       font-size: 12px;
       font-weight: 700;
       padding: 5px 12px;
@@ -90,9 +90,10 @@
       transition: var(--transition);
     }
     .tchip:hover {
-      background: #7C5CFF;
-      color: #fff;
-      border-color: #7C5CFF;
+      background: var(--primary);
+      color: #040814;
+      border-color: var(--primary);
+      box-shadow: 0 2px 10px var(--primary-glow);
     }
     .preview-chips {
       display: flex;
@@ -144,7 +145,7 @@
     <div class="container header-inner">
       <a href="/" class="brand">
         <img src="/assets/img/logo.png" alt="Sami Prompts Logo">
-        <span>Sami<b>Prompts</b> <span style="font-size:12px;background:#EDE9FE;color:#6D28D9;padding:2px 8px;border-radius:4px;vertical-align:middle;">👑 Creator Studio</span></span>
+        <span>Sami<b>Prompts</b> <span style="font-size:12px;background:var(--primary-light);color:var(--primary);border:1px solid var(--card-border);padding:2px 8px;border-radius:4px;vertical-align:middle;">👑 Creator Studio</span></span>
       </a>
       <input type="checkbox" id="nav-toggle" class="nav-toggle-cb">
       <label for="nav-toggle" class="nav-toggle">☰</label>
@@ -719,9 +720,9 @@
         const wrap = document.getElementById('community-admin-list');
 
         wrap.innerHTML = data.posts.map(p => `
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid #F1F0F5;">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid var(--border);">
             <div>
-              <strong>${escapeHtml(p.author)}</strong> ${p.is_admin ? '<span class="badge" style="background:#DCFCE7;color:#15803D;">Creator</span>' : ''}
+                <strong>${escapeHtml(p.author)}</strong> ${p.is_admin ? '<span class="badge" style="background:var(--green-light);color:var(--green-dark);border:1px solid rgba(16,185,129,0.3);">Creator ✔</span>' : ''}
               <p style="font-size:13.5px;margin-top:4px;color:var(--text-secondary);">${escapeHtml(p.content.slice(0, 120))}${p.content.length > 120 ? '…' : ''}</p>
               <div style="font-size:12px;color:var(--muted);margin-top:4px;">❤️ ${p.likes} likes · 💬 ${(p.comments || []).length} comments</div>
             </div>

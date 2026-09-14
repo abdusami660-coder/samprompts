@@ -1,0 +1,61 @@
+[
+  {
+    "id": "8",
+    "author": "shlendrasoni",
+    "time": "30 Aug 2026 · 07:01",
+    "is_admin": true,
+    "content": "## MASTER PROMPT USE GUIDE\n\n\n\n\n\nA Master Prompt is not a normal one-time prompt. It is a complete reusable AI system where the character, camera style, story DNA, duration, audio, continuity, negative rules, and output format are already defined.\n\n\n\n\n\n**Simple workflow:**\n\n\n\n\n\n1. Open a new ChatGPT or Claude chat and paste the complete Master Prompt.\n\n\n2. Type: **“Give me 10 topics.”**\n\n\n3. Select your favorite idea: **“Topic 4.”**\n\n\n4. Then type: **“Make full prompt.”**\n\n\n5. For changes, do not paste the full Master Prompt again. Simply say: **“Keep everything the same, change the location,” “make the hook stronger,” “make it 15 seconds,” “make the ending funnier,” or “keep the same character.”**\n\n\n6. For more ideas, type: **“Give me 10 more topics”** or **“Next video.”**\n\n\n\n\n\nThink of the Master Prompt as your permanent **Creative Director + Script Writer + Camera Director + Prompt Engineer.**\n\n\n\n\n\n**The Master Prompt defines HOW to create.\n\n\nYour next command defines WHAT to create.**\n\n\n\n\n\nFor a new chat, paste the Master Prompt again for the safest workflow.",
+    "likes": 3,
+    "comments": [
+      {
+        "author": "John",
+        "text": "Hello bhai iske jaise promte bna do aur page name Look in History"
+      }
+    ]
+  },
+  {
+    "id": "5",
+    "author": "Arman",
+    "time": "22 Aug 2026 · 07:52",
+    "is_admin": false,
+    "content": "post viral  nahi ho raha keya karu bhai?",
+    "likes": 3,
+    "comments": []
+  },
+  {
+    "id": "4",
+    "author": "Gobango",
+    "time": "22 Aug 2026 · 05:30",
+    "is_admin": false,
+    "content": "story board ko kaisay use krein kisi bhi prompt say video generation ky liye",
+    "likes": 1,
+    "comments": []
+  },
+  {
+    "id": "3",
+    "author": "Ajay Bagde",
+    "time": "18 Aug 2026 · 19:19",
+    "is_admin": false,
+    "content": "Hello sir iske jaise promte bna dijiye",
+    "likes": 0,
+    "comments": []
+  },
+  {
+    "id": "2",
+    "author": "Ajay Bagde",
+    "time": "18 Aug 2026 · 19:02",
+    "is_admin": false,
+    "content": "Hello sir iske jaise promte bna dijiye",
+    "likes": 0,
+    "comments": []
+  },
+  {
+    "id": "1",
+    "author": "Aqeel Ahmad",
+    "time": "13 Aug 2026 · 07:20",
+    "is_admin": false,
+    "content": "USA Army Content ko kese use karna hy please guide kar dain sir",
+    "likes": 11,
+    "comments": []
+  }
+]

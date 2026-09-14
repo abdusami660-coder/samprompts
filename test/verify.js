@@ -8,12 +8,12 @@ async function runTests() {
 
   // 1. Homepage & Static Routes
   console.log('1. Checking core HTML routes...');
-  const routes = ['/', '/browse', '/community', '/pricing', '/login', '/register', '/account', '/admin'];
+  const routes = ['/', '/browse', '/community', '/portfolio', '/pricing', '/login', '/register', '/account', '/admin'];
   for (const r of routes) {
     const res = await fetch(BASE + r);
     assert.strictEqual(res.status, 200, `Route ${r} returned status ${res.status}`);
   }
-  console.log('   ✓ All 8 core routes returned 200 OK.\n');
+  console.log('   ✓ All 9 core routes (including /portfolio) returned 200 OK.\n');
 
   // 2. Prompts Public API
   console.log('2. Checking Prompts Public API...');
@@ -190,10 +190,89 @@ cartoon, blurry, low resolution, bad hands, distorted faces, watermark, flickeri
     assert(pageHtml.includes('theme-toggle-btn'), `Page ${r} missing theme-toggle-btn`);
     assert(pageHtml.includes('sami_theme'), `Page ${r} missing anti-FOUC script`);
   }
-  console.log('   ✓ Dark and Light themes verified across all CSS tokens, JS engines, and 8 HTML pages.\n');
+  console.log('   ✓ Dark and Light themes verified across all CSS tokens, JS engines, and 9 HTML pages.\n');
+
+  // 16. Social Media Portfolio & Analytics Full CRUD Verification
+  console.log('16. Testing Social Media Portfolio & Analytics System...');
+  // a. GET /api/portfolio
+  const portRes = await fetch(BASE + '/api/portfolio');
+  assert.strictEqual(portRes.status, 200, 'Portfolio API should return 200');
+  const portData = await portRes.json();
+  assert.strictEqual(portData.success, true);
+  assert(portData.accounts && portData.accounts.length >= 5, 'Should have at least 5 seeded social accounts');
+  assert(portData.metrics.total_followers > 500000, 'Metrics total_followers should be computed');
+  assert(portData.metrics.total_views > 1000000, 'Metrics total_views should be computed');
+  console.log(`   ✓ Loaded portfolio: ${portData.accounts.length} accounts, ${portData.metrics.total_followers.toLocaleString()} total followers, ${portData.metrics.total_views.toLocaleString()} total views.`);
+
+  // b. GET /api/portfolio/analytics
+  const analRes = await fetch(BASE + '/api/portfolio/analytics');
+  assert.strictEqual(analRes.status, 200, 'Portfolio analytics API should return 200');
+  const analData = await analRes.json();
+  assert.strictEqual(analData.success, true);
+  assert(analData.growthTimeline.datasets.length >= 5, 'Growth timeline datasets should exist');
+  assert(analData.platformShare.length >= 5, 'Platform share items should exist');
+  assert(analData.viewsBreakdown.length >= 5, 'Views breakdown items should exist');
+  console.log(`   ✓ Verified Chart.js analytics endpoints: timeline, platform share, views breakdown.`);
+
+  // c. POST /api/portfolio (Add Account)
+  console.log('   Creating custom social account via API...');
+  const newAccountPayload = {
+    platform: 'threads',
+    account_name: 'Sami AI Viral Threads',
+    handle: '@samithreads',
+    profile_url: 'https://threads.net/@samithreads',
+    followers_count: 45000,
+    following_count: 120,
+    total_views: 620000,
+    posts_count: 42,
+    engagement_rate: 6.8,
+    monthly_growth: '+14.2%',
+    goal_target: 100000,
+    category: 'AI & Tech',
+    status: 'active',
+    notes: 'Daily AI generation breakdown hooks'
+  };
+  const createAccRes = await fetch(BASE + '/api/portfolio', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(newAccountPayload)
+  });
+  assert.strictEqual(createAccRes.status, 200, 'Create social account should return 200');
+  const createdAccData = await createAccRes.json();
+  assert.strictEqual(createdAccData.success, true);
+  assert(createdAccData.account && createdAccData.account.id, 'Account ID should be created');
+  const testAccId = createdAccData.account.id;
+  console.log(`   ✓ Created test account "${newAccountPayload.account_name}" (ID: ${testAccId}).`);
+
+  // d. PUT /api/portfolio/:id (Update Account)
+  console.log(`   Updating account ${testAccId}...`);
+  const updateAccRes = await fetch(BASE + `/api/portfolio/${testAccId}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      ...newAccountPayload,
+      followers_count: 52000,
+      monthly_growth: '+18.5%'
+    })
+  });
+  assert.strictEqual(updateAccRes.status, 200, 'Update account should return 200');
+  const updatedAccData = await updateAccRes.json();
+  assert.strictEqual(updatedAccData.success, true);
+  assert.strictEqual(updatedAccData.account.followers_count, 52000);
+  console.log(`   ✓ Updated account ID ${testAccId} followers to 52,000.`);
+
+  // e. DELETE /api/portfolio/:id (Remove Account)
+  console.log(`   Deleting test account ${testAccId}...`);
+  const delAccRes = await fetch(BASE + `/api/portfolio/${testAccId}`, {
+    method: 'DELETE'
+  });
+  assert.strictEqual(delAccRes.status, 200, 'Delete account should return 200');
+  const delAccData = await delAccRes.json();
+  assert.strictEqual(delAccData.success, true);
+  console.log(`   ✓ Deleted test account ID ${testAccId} successfully.\n`);
 
   console.log('═══════════════════════════════════════════════════════════');
-  console.log('🎉 ALL 15 TEST SUITE ASSERTIONS PASSED WITH FLYING COLORS! 🚀');
+  console.log('🎉 ALL 16 TEST SUITE ASSERTIONS PASSED WITH FLYING COLORS! 🚀');
   console.log('═══════════════════════════════════════════════════════════\n');
 }
 

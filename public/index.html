@@ -1,14 +1,14 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sami Prompts — Viral AI Video Prompts by Sami</title>
-  <meta name="description" content="Viral AI video prompts by Sami for Facebook Reels, YouTube Shorts, Instagram & TikTok. Works with Seedance, Kling, Veo & any AI video tool.">
+  <title>Sami Prompts — Viral AI Video Master Prompts & Storyboards</title>
+  <meta name="description" content="Discover 312+ production-ready AI video master prompts for Kling AI, Seedance 2.0, Veo & Sora. Copy full scenes, camera angles, timing breakdowns and 4K storyboards.">
   <link rel="icon" type="image/png" href="/assets/img/logo.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/assets/css/style.css">
   <script>
     (function() {
@@ -26,17 +26,22 @@
         <img src="/assets/img/logo.png" alt="Sami Prompts Logo">
         <span>Sami<b>Prompts</b></span>
       </a>
-      <input type="checkbox" id="nav-toggle" class="nav-toggle-cb">
-      <label for="nav-toggle" class="nav-toggle">☰</label>
+
+      <input type="checkbox" id="nav-toggle" class="nav-toggle-cb" aria-label="Toggle navigation menu">
+      <label for="nav-toggle" class="nav-toggle-label">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+      </label>
+
       <nav class="main-nav" id="main-nav">
-        <!-- Injected dynamically by main.js -->
         <a href="/" class="active">Home</a>
-        <a href="/browse">All Prompts</a>
+        <a href="/browse">All Prompts <span class="nav-counter" style="background:var(--primary);color:#fff;font-size:11px;padding:2px 7px;border-radius:10px;font-weight:800;margin-left:4px;">312+</span></a>
+        <a href="/portfolio">📊 Social Portfolio</a>
         <a href="/community">Social Corner</a>
-        <a href="/pricing">Join Community</a>
+        <a href="/pricing" style="color:var(--amber);font-weight:700;">👑 VIP Pass</a>
         <a href="/login">Login</a>
         <a href="/register" class="nav-btn">Get Started</a>
       </nav>
+
       <div class="header-actions">
         <button id="theme-toggle-btn" class="theme-toggle-btn" type="button" aria-label="Toggle Dark/Light Mode" title="Toggle Theme">
           <span class="theme-icon moon-icon">
@@ -55,15 +60,206 @@
               <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
             </svg>
           </span>
-          <span class="theme-text">Theme</span>
+          <span class="theme-text">Dark</span>
         </button>
       </div>
     </div>
   </header>
 
   <main>
-    <div class="container">
-      <!-- Cover Banner Slider -->
+    <!-- Hero Modern Section -->
+    <section class="hero-modern container">
+      <div class="hero-pill">
+        <span class="dot-live"></span>
+        <span>312+ Production-Ready Viral AI Video Prompts Added</span>
+      </div>
+
+      <h1 class="hero-title">
+        Create Viral AI Videos in <span class="gradient-text">Seconds</span>
+      </h1>
+
+      <p class="hero-sub">
+        Copy & paste tested master prompts for <strong>Kling AI</strong>, <strong>Seedance 2.0</strong>, <strong>Google Veo</strong> and <strong>Sora</strong>. Complete with scene breakdowns, camera angles, timing, viral hooks and 4K storyboards.
+      </p>
+
+      <!-- Live Search Form -->
+      <div class="hero-search-wrap">
+        <form action="/browse" method="GET" class="hero-search-box">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <input type="text" name="q" placeholder="Search 312+ viral prompts (e.g. puppy challenge, load tests, helicopter, asmr)..." required>
+          <button type="submit" class="hero-search-btn">Find Prompts</button>
+        </form>
+      </div>
+
+      <!-- Quick AI Tool Chips -->
+      <div class="model-chips">
+        <a href="/browse" class="model-chip active">⚡ All Prompts</a>
+        <a href="/browse?q=kling" class="model-chip">🎬 Kling AI</a>
+        <a href="/browse?q=seedance" class="model-chip">🚀 Seedance 2.0</a>
+        <a href="/browse?q=veo" class="model-chip">🎥 Google Veo</a>
+        <a href="/browse?type=free" class="model-chip" style="color:var(--green);border-color:rgba(16,185,129,0.3);">🎁 100% Free Prompts</a>
+        <a href="/browse?type=premium" class="model-chip" style="color:var(--amber);border-color:rgba(245,158,11,0.3);">👑 VIP Master Prompts</a>
+      </div>
+
+      <!-- Stats Ticker Grid -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-num" id="stat-prompts">312+</div>
+          <div class="stat-label">Master Prompts</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num">12</div>
+          <div class="stat-label">Viral Niches</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num">80,000+</div>
+          <div class="stat-label">Creator Copies</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" style="color:var(--green);">100%</div>
+          <div class="stat-label">Tested & Verified</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Visual Category Explorer -->
+    <section class="container" style="margin-bottom:48px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+        <div>
+          <h2 style="font-size:24px;font-weight:800;color:var(--text);letter-spacing:-0.02em;">📂 Explore by Niche</h2>
+          <p style="color:var(--muted);font-size:14.5px;margin-top:2px;">Curated viral niches optimized for TikTok, Reels & Shorts algorithms</p>
+        </div>
+        <a href="/browse" class="btn btn-sm btn-outline">View All →</a>
+      </div>
+
+      <div class="cat-showcase-grid">
+        <a href="/browse?cat=Animal%20%26%20Pets" class="cat-showcase-card">
+          <div class="cat-icon-badge">🐾</div>
+          <div class="cat-info">
+            <h4>Animal & Pets</h4>
+            <span>54 Viral Prompts</span>
+          </div>
+        </a>
+        <a href="/browse?cat=Art%20%26%20Animation" class="cat-showcase-card">
+          <div class="cat-icon-badge">🎨</div>
+          <div class="cat-info">
+            <h4>Art & Animation</h4>
+            <span>34 Viral Prompts</span>
+          </div>
+        </a>
+        <a href="/browse?cat=Sports%20%26%20Action" class="cat-showcase-card">
+          <div class="cat-icon-badge">🏎️</div>
+          <div class="cat-info">
+            <h4>Sports & Action</h4>
+            <span>31 Viral Prompts</span>
+          </div>
+        </a>
+        <a href="/browse?cat=ASMR%20%26%20Satisfying" class="cat-showcase-card">
+          <div class="cat-icon-badge">✨</div>
+          <div class="cat-info">
+            <h4>ASMR & Satisfying</h4>
+            <span>29 Viral Prompts</span>
+          </div>
+        </a>
+        <a href="/browse?cat=Fantasy%20%26%20Sci-Fi" class="cat-showcase-card">
+          <div class="cat-icon-badge">🔮</div>
+          <div class="cat-info">
+            <h4>Fantasy & Sci-Fi</h4>
+            <span>30 Viral Prompts</span>
+          </div>
+        </a>
+        <a href="/browse?cat=Comedy%20%26%20Entertainment" class="cat-showcase-card">
+          <div class="cat-icon-badge">🎭</div>
+          <div class="cat-info">
+            <h4>Comedy & Humor</h4>
+            <span>22 Viral Prompts</span>
+          </div>
+        </a>
+        <a href="/browse?cat=Kids%20%26%20Family" class="cat-showcase-card">
+          <div class="cat-icon-badge">👶</div>
+          <div class="cat-info">
+            <h4>Kids & Family</h4>
+            <span>21 Viral Prompts</span>
+          </div>
+        </a>
+        <a href="/browse?cat=Nature%20%26%20Wildlife" class="cat-showcase-card">
+          <div class="cat-icon-badge">🌿</div>
+          <div class="cat-info">
+            <h4>Nature & Wildlife</h4>
+            <span>22 Viral Prompts</span>
+          </div>
+        </a>
+      </div>
+    </section>
+
+    <!-- Latest Master Prompts Showcase Grid -->
+    <section class="container" style="margin-bottom:56px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
+        <div>
+          <h2 style="font-size:24px;font-weight:800;color:var(--text);letter-spacing:-0.02em;">🔥 Latest Master Prompts</h2>
+          <p style="color:var(--muted);font-size:14.5px;margin-top:2px;">Freshly synced viral video prompts from soniprompts.com</p>
+        </div>
+        <a href="/browse?sort=new" class="btn btn-sm btn-primary">Browse All 312+ →</a>
+      </div>
+
+      <div class="grid" id="latest-prompts-grid">
+        <div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--muted);">
+          Loading latest viral master prompts…
+        </div>
+      </div>
+    </section>
+
+    <!-- Top Free Prompts Section -->
+    <section class="container" style="margin-bottom:56px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
+        <div>
+          <h2 style="font-size:24px;font-weight:800;color:var(--text);letter-spacing:-0.02em;">🎁 100% Free Copy-Ready Prompts</h2>
+          <p style="color:var(--muted);font-size:14.5px;margin-top:2px;">Instant 1-click copy without requiring any membership</p>
+        </div>
+        <a href="/browse?type=free" class="btn btn-sm btn-outline">View All Free Prompts →</a>
+      </div>
+
+      <div class="grid" id="free-prompts-grid">
+        <div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--muted);">
+          Loading free prompts…
+        </div>
+      </div>
+    </section>
+
+    <!-- How It Works Section (3 Easy Steps) -->
+    <section class="container">
+      <div class="how-it-works">
+        <div style="text-align:center;">
+          <span style="font-size:12.5px;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:var(--primary);">Fast & Effortless Workflow</span>
+          <h2 style="font-size:28px;font-weight:900;color:var(--text);margin-top:6px;">How To Generate Viral AI Videos</h2>
+          <p style="color:var(--text-secondary);font-size:15px;max-width:540px;margin:8px auto 0;">Three simple steps from copying to generating viral content that ranks on TikTok, YouTube Shorts and Instagram Reels.</p>
+        </div>
+
+        <div class="steps-grid">
+          <div class="step-card">
+            <div class="step-num">1</div>
+            <h3>Choose a Prompt</h3>
+            <p>Filter by AI tool (Kling, Seedance, Veo) or browse by proven viral niches with verified engagement.</p>
+          </div>
+          <div class="step-card">
+            <div class="step-num">2</div>
+            <h3>1-Click Copy</h3>
+            <p>Hit the Copy button to grab the complete master prompt, timing, scene transitions and camera instructions.</p>
+          </div>
+          <div class="step-card">
+            <div class="step-num">3</div>
+            <h3>Paste & Generate</h3>
+            <p>Paste directly into your AI generator and export hyper-realistic, photorealistic viral videos in minutes.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Cover Showcase Banners -->
+    <section class="container" style="margin-bottom:60px;">
+      <div style="text-align:center;margin-bottom:18px;">
+        <span style="font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;">Visual Master Collection</span>
+      </div>
       <div class="cover-slider">
         <img class="cover-slide active" src="/assets/img/banners/banner-01.jpg" alt="Sami Prompts Viral AI Video Prompts" width="1400" height="467">
         <img class="cover-slide" src="/assets/img/banners/banner-02.jpg" alt="Viral Prompts" width="1400" height="467">
@@ -72,40 +268,7 @@
         <img class="cover-slide" src="/assets/img/banners/banner-05.jpg" alt="Seedance Kling Veo" width="1400" height="467">
         <img class="cover-slide" src="/assets/img/banners/banner-06.jpg" alt="Sami Prompts Community" width="1400" height="467">
       </div>
-
-      <!-- Profile Strip -->
-      <div class="profile-strip">
-        <div class="avatar-wrap">
-          <img src="/assets/img/avatar.png" alt="Sami" class="profile-avatar">
-          <span class="verified-badge" title="Verified Creator">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-          </span>
-        </div>
-        <h1 class="profile-name">Sami<b>Prompts</b></h1>
-        <p class="byline">Viral Prompts by <strong>Sami</strong></p>
-      </div>
-
-      <!-- Prompt Lists -->
-      <div class="plist">
-        <!-- Free Prompts -->
-        <h2 class="plist-head">Free Prompts</h2>
-        <div id="free-list">
-          <div style="text-align:center;padding:30px;color:var(--muted);">Loading free viral prompts…</div>
-        </div>
-        <p style="text-align:center;margin:10px 0 32px;">
-          <a href="/browse?type=free" class="btn btn-primary">Load More Free Prompts →</a>
-        </p>
-
-        <!-- Premium Prompts -->
-        <h2 class="plist-head">Premium Prompts</h2>
-        <div id="premium-list">
-          <div style="text-align:center;padding:30px;color:var(--muted);">Loading premium prompts…</div>
-        </div>
-        <p style="text-align:center;margin:10px 0 40px;">
-          <a href="/browse?type=premium" class="btn btn-primary">Load More Prompts →</a>
-        </p>
-      </div>
-    </div>
+    </section>
   </main>
 
   <!-- Floating WhatsApp Support -->
@@ -122,15 +285,17 @@
           <img src="/assets/img/logo.png" alt="Sami Prompts Logo">
           <span>Sami<b>Prompts</b></span>
         </div>
-        <p class="footer-tag">Viral AI video prompts by Sami</p>
+        <p class="footer-tag">Viral AI video prompts engine by Sami</p>
       </div>
 
       <nav class="footer-nav f-center">
         <a href="/browse">All Prompts</a>
         <span class="footer-dot">·</span>
+        <a href="/portfolio">Social Portfolio</a>
+        <span class="footer-dot">·</span>
         <a href="/community">Social Corner</a>
         <span class="footer-dot">·</span>
-        <a href="/pricing">Join Community</a>
+        <a href="/pricing">VIP Pass</a>
         <span class="footer-dot">·</span>
         <a href="/contact">Contact</a>
         <span class="footer-dot">·</span>
@@ -143,9 +308,6 @@
 
       <div class="f-right">
         <div class="social-row">
-          <a href="https://facebook.com" target="_blank" rel="noopener" class="social-ic" aria-label="Facebook">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.07C24 5.4 18.63 0 12 0S0 5.4 0 12.07c0 6.02 4.39 11.02 10.13 11.93v-8.44H7.08v-3.49h3.05V9.41c0-3.02 1.79-4.7 4.53-4.7 1.31 0 2.68.24 2.68.24v2.97h-1.51c-1.49 0-1.96.93-1.96 1.89v2.26h3.33l-.53 3.49h-2.8V24C19.61 23.09 24 18.09 24 12.07z"/></svg>
-          </a>
           <a href="https://whatsapp.com" target="_blank" rel="noopener" class="social-ic" aria-label="WhatsApp Channel">
             <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M12.05 21.79h-.01a9.72 9.72 0 0 1-4.96-1.36l-.36-.21-3.69.97.98-3.6-.23-.37a9.72 9.72 0 0 1-1.49-5.18c0-5.37 4.37-9.74 9.75-9.74a9.68 9.68 0 0 1 6.89 2.86 9.68 9.68 0 0 1 2.85 6.89c0 5.38-4.37 9.74-9.73 9.74zm8.28-18.02A11.64 11.64 0 0 0 12.05.33C5.6.33.35 5.58.35 12.03c0 2.06.54 4.07 1.56 5.84L.25 23.79l6.07-1.59a11.68 11.68 0 0 0 5.72 1.46h.01c6.45 0 11.7-5.25 11.7-11.7 0-3.13-1.22-6.07-3.42-8.19z"/></svg>
           </a>
@@ -157,62 +319,75 @@
 
   <script src="/assets/js/main.js"></script>
   <script>
+    function renderCard(p) {
+      const isFree = p.type === 'free';
+      const badgeClass = isFree ? 'pcard-badge-free' : 'pcard-badge-vip';
+      const badgeText = isFree ? '🎁 Free Access' : '👑 VIP Master';
+      
+      let tool = '🎬 Kling AI';
+      const text = (p.title + ' ' + (p.prompt_content || '')).toLowerCase();
+      if (text.includes('seedance')) tool = '⚡ Seedance 2.0';
+      else if (text.includes('veo')) tool = '🎥 Google Veo';
+      else if (text.includes('sora')) tool = '🌟 OpenAI Sora';
+      else if (text.includes('kling')) tool = '🎬 Kling AI';
+      else if (text.includes('dreamina') || text.includes('luma')) tool = '✨ Luma Dream';
+
+      return `
+        <div class="pcard">
+          <a href="/prompt?id=${p.id}" class="pcard-thumb">
+            <img src="${p.thumbnail || '/assets/img/cover.jpg'}" alt="${p.title}" loading="lazy">
+            <span class="${badgeClass}">${badgeText}</span>
+            <span class="pcard-tool-tag">${tool}</span>
+          </a>
+          <div class="pcard-body">
+            <span class="pcard-cat-tag">📂 ${p.category}</span>
+            <h3 class="pcard-title">
+              <a href="/prompt?id=${p.id}" style="color:inherit;text-decoration:none;">${p.title}</a>
+            </h3>
+            <p class="pcard-teaser">${p.teaser || 'Complete AI video master prompt system with camera setups, lighting, timing and reference storyboards.'}</p>
+            <div class="pcard-footer">
+              <div class="pcard-stats">
+                <span>👁️ ${p.views_count || 0}</span>
+                <span>📋 ${p.copies_count || 0}</span>
+              </div>
+              <div class="pcard-actions">
+                <button type="button" class="quick-copy-btn" data-prompt-id="${p.id}" title="1-Click Copy Master Prompt">
+                  📋 Copy
+                </button>
+                <a href="/prompt?id=${p.id}" class="btn btn-sm ${isFree ? 'btn-outline' : 'btn-primary'}" style="padding:6px 12px;font-size:12px;">
+                  View →
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
     document.addEventListener('DOMContentLoaded', async () => {
-      // Fetch free prompts
+      // 1. Fetch latest prompts
       try {
-        const fRes = await fetch('/api/prompts?type=free&limit=4');
-        const fData = await fRes.json();
-        const fEl = document.getElementById('free-list');
-        if (fData.prompts && fData.prompts.length) {
-          fEl.innerHTML = fData.prompts.map(p => `
-            <a class="prow" href="/prompt?id=${p.id}">
-              <div class="prow-thumb">
-                <img src="${p.thumbnail || '/assets/img/cover.jpg'}" alt="${p.title}" loading="lazy">
-                <span class="prow-file-badge">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                </span>
-              </div>
-              <div class="prow-body">
-                <h3>${p.title}</h3>
-                <div class="prow-meta-row">
-                  <span>🗂 1 prompt</span>
-                  <span>📂 ${p.category}</span>
-                  <span class="prow-price is-free">Free</span>
-                </div>
-              </div>
-              <span class="prow-btn prow-btn-free">Get access</span>
-            </a>
-          `).join('');
+        const latestRes = await fetch('/api/prompts?limit=8&sort=new');
+        const latestData = await latestRes.json();
+        const lGrid = document.getElementById('latest-prompts-grid');
+        if (latestData.prompts && latestData.prompts.length) {
+          lGrid.innerHTML = latestData.prompts.map(renderCard).join('');
+          if (latestData.total) {
+            const countEl = document.getElementById('stat-prompts');
+            if (countEl) countEl.textContent = latestData.total + '+';
+          }
         } else {
-          fEl.innerHTML = '<p style="text-align:center;color:var(--muted);">No free prompts available.</p>';
+          lGrid.innerHTML = '<p style="text-align:center;color:var(--muted);grid-column:1/-1;">No prompts available yet.</p>';
         }
 
-        // Fetch premium prompts
-        const pRes = await fetch('/api/prompts?type=premium&limit=10');
-        const pData = await pRes.json();
-        const pEl = document.getElementById('premium-list');
-        if (pData.prompts && pData.prompts.length) {
-          pEl.innerHTML = pData.prompts.map(p => `
-            <a class="prow" href="/prompt?id=${p.id}">
-              <div class="prow-thumb">
-                <img src="${p.thumbnail || '/assets/img/cover.jpg'}" alt="${p.title}" loading="lazy">
-                <span class="prow-file-badge">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                </span>
-              </div>
-              <div class="prow-body">
-                <h3>${p.title}</h3>
-                <div class="prow-meta-row">
-                  <span>🗂 1 prompt</span>
-                  <span>📂 ${p.category}</span>
-                  <span class="prow-price">Premium</span>
-                </div>
-              </div>
-              <span class="prow-btn">Join to unlock</span>
-            </a>
-          `).join('');
+        // 2. Fetch free prompts
+        const freeRes = await fetch('/api/prompts?type=free&limit=4');
+        const freeData = await freeRes.json();
+        const fGrid = document.getElementById('free-prompts-grid');
+        if (freeData.prompts && freeData.prompts.length) {
+          fGrid.innerHTML = freeData.prompts.map(renderCard).join('');
         } else {
-          pEl.innerHTML = '<p style="text-align:center;color:var(--muted);">No premium prompts available.</p>';
+          fGrid.innerHTML = '<p style="text-align:center;color:var(--muted);grid-column:1/-1;">No free prompts found.</p>';
         }
       } catch (err) {
         console.error('Homepage load error:', err);

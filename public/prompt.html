@@ -144,17 +144,59 @@
 
         let contentBlockHtml = '';
         if (prompt.is_unlocked) {
+          const charCount = prompt.prompt_content ? prompt.prompt_content.length.toLocaleString() : '0';
+          const lineCount = prompt.prompt_content ? prompt.prompt_content.split('\n').length : 1;
+
           contentBlockHtml = `
-            ${storyboardsHtml}
-            <div class="copy-bar" style="margin-top:24px;">
-              <button class="btn btn-primary btn-sm" id="copy-btn" data-prompt-id="${prompt.id}">
-                📋 Copy Master Prompt
-              </button>
-              <button type="button" class="btn btn-outline btn-sm share-btn" data-link="${window.location.href}">
-                🔗 Share
-              </button>
+            <!-- Top Copy Master Prompt Banner -->
+            <div class="copy-banner">
+              <div class="copy-banner-title">
+                <h3>🚀 Ready to Generate</h3>
+                <p>One-click copy master prompt system (${charCount} characters · ${lineCount} lines)</p>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;">
+                <button type="button" class="copy-master-btn" id="copy-btn" data-prompt-id="${prompt.id}">
+                  📋 COPY MASTER PROMPT
+                </button>
+                <button type="button" class="btn btn-outline share-btn" data-link="${window.location.href}" style="padding:13px 18px;">
+                  🔗 Share
+                </button>
+              </div>
             </div>
-            <div class="prompt-content" id="prompt-content">${escapeHtml(prompt.prompt_content)}</div>
+
+            <!-- Recommended AI Generation Settings -->
+            <div class="ai-settings-grid">
+              <div class="ai-setting-item">
+                <div class="ai-setting-label">Recommended AI Tool</div>
+                <div class="ai-setting-val">Kling AI v1.5 / Seedance 2.0</div>
+              </div>
+              <div class="ai-setting-item">
+                <div class="ai-setting-label">Optimal Aspect Ratio</div>
+                <div class="ai-setting-val">9:16 (Shorts/Reels) · 16:9 (Cinema)</div>
+              </div>
+              <div class="ai-setting-item">
+                <div class="ai-setting-label">Camera Motion</div>
+                <div class="ai-setting-val">Cinematic Pan, Orbit & Push-In</div>
+              </div>
+              <div class="ai-setting-item">
+                <div class="ai-setting-label">Resolution & FPS</div>
+                <div class="ai-setting-val">1080p / 4K UHD · 24fps</div>
+              </div>
+            </div>
+
+            <!-- Master Prompt Content Box -->
+            <div style="position:relative;margin-top:28px;">
+              <div style="display:flex;align-items:center;justify-content:space-between;background:var(--card-solid);border:1px solid var(--border);border-bottom:none;padding:12px 18px;border-radius:14px 14px 0 0;">
+                <span style="font-size:13px;font-weight:700;color:var(--text-secondary);display:flex;align-items:center;gap:8px;">
+                  <span style="width:10px;height:10px;background:var(--green);border-radius:50%;display:inline-block;"></span>
+                  MASTER PROMPT SYSTEM · MULTI-SCENE ENGINE
+                </span>
+                <span style="font-size:12px;color:var(--muted);">${charCount} characters</span>
+              </div>
+              <div class="prompt-content" id="prompt-content" style="margin-top:0;border-radius:0 0 14px 14px;">${escapeHtml(prompt.prompt_content)}</div>
+            </div>
+
+            ${storyboardsHtml}
           `;
         } else {
           // Locked view
@@ -183,21 +225,32 @@
         const dateFormatted = prompt.created_at ? new Date(prompt.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Recently';
 
         document.getElementById('prompt-container').innerHTML = `
-          <a href="/browse" class="back-link">← Back to all prompts</a>
+          <!-- Breadcrumbs -->
+          <div class="breadcrumbs">
+            <a href="/">Home</a>
+            <span>›</span>
+            <a href="/browse">All Prompts</a>
+            <span>›</span>
+            <a href="/browse?cat=${encodeURIComponent(prompt.category)}">${prompt.category}</a>
+            <span>›</span>
+            <span style="color:var(--text);font-weight:600;">#${prompt.id}</span>
+          </div>
+
           <div class="prompt-head">
             <h1>${prompt.title}</h1>
             <div class="prompt-meta">
-              <span>📂 ${prompt.category}</span>
+              <span class="pill" style="font-size:12.5px;padding:4px 12px;background:var(--primary-light);color:var(--primary);border:1px solid var(--card-border);">📂 ${prompt.category}</span>
               <span>🕒 Updated ${dateFormatted}</span>
-              <span>${prompt.type === 'free' ? '🎁 Free' : '⭐ Premium'}</span>
+              <span style="color:${prompt.type === 'free' ? 'var(--green)' : 'var(--amber)'};font-weight:800;">${prompt.type === 'free' ? '🎁 Free Prompt' : '👑 VIP Master Prompt'}</span>
               <span>👁 ${prompt.views_count} views</span>
+              <span>📋 ${prompt.copies_count} copies</span>
             </div>
             <div class="tool-badges">
-              <span class="tool-badge">Seedance 2.5</span>
-              <span class="tool-badge">Kling AI</span>
-              <span class="tool-badge">Google Veo</span>
-              <span class="tool-badge">Dreamina</span>
-              <span class="tool-badge">Hailuo Minimax</span>
+              <span class="tool-badge">⚡ Seedance 2.0</span>
+              <span class="tool-badge">🎬 Kling AI v1.5</span>
+              <span class="tool-badge">🎥 Google Veo 2</span>
+              <span class="tool-badge">🌟 OpenAI Sora</span>
+              <span class="tool-badge">✨ Luma Dreamina</span>
             </div>
           </div>
           ${contentBlockHtml}

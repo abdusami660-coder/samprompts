@@ -135,7 +135,7 @@
             <p><strong>Name:</strong> ${escapeHtml(user.name)}</p>
             <p><strong>Email:</strong> ${escapeHtml(user.email)}</p>
             <p><strong>Joined:</strong> 12 Aug 2026</p>
-            ${user.role === 'admin' ? '<p style="margin-top:8px;"><span class="badge" style="background:#EDE9FE;color:#6D28D9;">Administrator</span></p>' : ''}
+            ${user.role === 'admin' ? '<p style="margin-top:8px;"><span class="badge" style="background:var(--primary-light);color:var(--primary);border:1px solid var(--card-border);">⚡ Super Admin</span></p>' : ''}
           </div>
 
           <!-- Membership Card -->
@@ -172,7 +172,7 @@
           if (bData.prompts && bData.prompts.length > 0) {
             document.getElementById('bookmarks-card').style.display = 'block';
             document.getElementById('bookmarks-list').innerHTML = bData.prompts.map(p => `
-              <div style="padding:10px 0;border-bottom:1px solid #F1F0F5;display:flex;justify-content:space-between;align-items:center;">
+              <div style="padding:10px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
                 <a href="/prompt?id=${p.id}" style="font-weight:600;">${escapeHtml(p.title)}</a>
                 <span class="badge ${p.type === 'free' ? 'badge-active' : ''}">${p.type}</span>
               </div>

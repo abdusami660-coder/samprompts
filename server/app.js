@@ -168,7 +168,8 @@ app.post('/api/auth/logout', (req, res) => {
 
 app.get('/api/prompts', async (req, res) => {
   try {
-    const { q, type, cat, sort, limit = 20, offset = 0 } = req.query;
+    const { q, type, sort, limit = 20, offset = 0 } = req.query;
+    const cat = req.query.cat || req.query.category;
     let sql = `SELECT id, title, category, type, thumbnail, teaser, storyboards, views_count, copies_count, created_at FROM prompts WHERE 1=1`;
     const params = [];
 
@@ -578,6 +579,366 @@ app.post('/api/checkout/verify-payment', async (req, res) => {
 });
 
 // ----------------------------------------------------
+// SOCIAL MEDIA PORTFOLIO & ANALYTICS API
+// ----------------------------------------------------
+
+const PLATFORM_COLORS = {
+  tiktok: '#00F2FE',
+  youtube: '#FF0000',
+  instagram: '#E1306C',
+  facebook: '#1877F2',
+  twitter: '#1DA1F2',
+  x: '#FFFFFF',
+  linkedin: '#0A66C2',
+  pinterest: '#E60023',
+  twitch: '#9146FF',
+  threads: '#10B981',
+  custom: '#6366F1'
+};
+
+function generateDefaultHistory(currentFollowers) {
+  const months = ['Oct 2025', 'Nov 2025', 'Dec 2025', 'Jan 2026', 'Feb 2026', 'Mar 2026'];
+  const cur = parseInt(currentFollowers, 10) || 1000;
+  const ratios = [0.65, 0.72, 0.80, 0.87, 0.94, 1.0];
+  return months.map((month, idx) => ({
+    month,
+    followers: Math.round(cur * ratios[idx])
+  }));
+}
+
+// 1. Get all social accounts + high-level omnichannel metrics
+app.get('/api/portfolio', async (req, res) => {
+  try {
+    const accounts = await all(`
+      SELECT * FROM social_accounts 
+      ORDER BY followers_count DESC, id ASC
+    `);
+
+    let totalFollowers = 0;
+    let totalViews = 0;
+    let totalPosts = 0;
+    let totalEngagement = 0;
+    let activeCount = 0;
+
+    const formatted = accounts.map(acc => {
+      let hist = [];
+      try {
+        hist = typeof acc.history === 'string' ? JSON.parse(acc.history) : (acc.history || []);
+      } catch (e) {
+        hist = generateDefaultHistory(acc.followers_count);
+      }
+
+      totalFollowers += Number(acc.followers_count || 0);
+      totalViews += Number(acc.total_views || 0);
+      totalPosts += Number(acc.posts_count || 0);
+      totalEngagement += Number(acc.engagement_rate || 0);
+      if (acc.status === 'active') activeCount++;
+
+      const goal = Number(acc.goal_target) || 100000;
+      const progressPercent = Math.min(100, Math.round(((acc.followers_count || 0) / goal) * 100));
+
+      return {
+        ...acc,
+        history: hist,
+        goal_progress: progressPercent,
+        color: PLATFORM_COLORS[acc.platform.toLowerCase()] || '#6366F1'
+      };
+    });
+
+    const avgEngagement = accounts.length > 0 
+      ? Number((totalEngagement / accounts.length).toFixed(2)) 
+      : 0;
+
+    const metrics = {
+      total_accounts: accounts.length,
+      active_accounts: activeCount,
+      total_followers: totalFollowers,
+      total_views: totalViews,
+      total_posts: totalPosts,
+      avg_engagement: avgEngagement,
+      top_platform: accounts.length > 0 ? accounts[0].platform : null
+    };
+
+    res.json({
+      success: true,
+      metrics,
+      accounts: formatted
+    });
+  } catch (err) {
+    console.error('Error fetching social portfolio:', err);
+    res.status(500).json({ error: 'Failed to fetch social media portfolio.' });
+  }
+});
+
+// 2. Dedicated Analytics endpoint for Chart.js
+app.get('/api/portfolio/analytics', async (req, res) => {
+  try {
+    const accounts = await all(`
+      SELECT * FROM social_accounts 
+      ORDER BY followers_count DESC
+    `);
+
+    const months = ['Oct 2025', 'Nov 2025', 'Dec 2025', 'Jan 2026', 'Feb 2026', 'Mar 2026'];
+    
+    // Build datasets for growth timeline
+    const datasets = accounts.map(acc => {
+      let hist = [];
+      try {
+        hist = typeof acc.history === 'string' ? JSON.parse(acc.history) : (acc.history || []);
+      } catch (e) {
+        hist = generateDefaultHistory(acc.followers_count);
+      }
+
+      const dataMap = {};
+      hist.forEach(h => { dataMap[h.month] = h.followers; });
+      const data = months.map(m => dataMap[m] !== undefined ? dataMap[m] : (acc.followers_count || 0));
+
+      return {
+        label: acc.account_name || acc.platform,
+        platform: acc.platform,
+        color: PLATFORM_COLORS[acc.platform.toLowerCase()] || '#6366F1',
+        data
+      };
+    });
+
+    const aggregateGrowth = months.map((m, idx) => {
+      return datasets.reduce((sum, ds) => sum + (ds.data[idx] || 0), 0);
+    });
+
+    const totalFollowers = accounts.reduce((sum, a) => sum + (a.followers_count || 0), 0);
+    const platformShare = accounts.map(acc => ({
+      platform: acc.platform,
+      name: acc.account_name,
+      followers: acc.followers_count,
+      percentage: totalFollowers > 0 ? Number(((acc.followers_count / totalFollowers) * 100).toFixed(1)) : 0,
+      color: PLATFORM_COLORS[acc.platform.toLowerCase()] || '#6366F1'
+    }));
+
+    const viewsBreakdown = accounts.map(acc => ({
+      platform: acc.platform,
+      name: acc.account_name,
+      views: acc.total_views || 0,
+      posts: acc.posts_count || 0,
+      avg_views_per_post: acc.posts_count > 0 ? Math.round((acc.total_views || 0) / acc.posts_count) : 0,
+      color: PLATFORM_COLORS[acc.platform.toLowerCase()] || '#6366F1'
+    }));
+
+    res.json({
+      success: true,
+      months,
+      growthTimeline: {
+        months,
+        datasets,
+        aggregateGrowth
+      },
+      platformShare,
+      viewsBreakdown
+    });
+  } catch (err) {
+    console.error('Analytics endpoint error:', err);
+    res.status(500).json({ error: 'Failed to generate analytics data.' });
+  }
+});
+
+// 3. Create new social media account
+app.post('/api/portfolio', async (req, res) => {
+  try {
+    const {
+      platform,
+      account_name,
+      handle,
+      profile_url,
+      followers_count = 0,
+      following_count = 0,
+      posts_count = 0,
+      total_views = 0,
+      engagement_rate = 0,
+      category = 'Content Creator',
+      goal_target = 100000,
+      monthly_growth = '+5.0%',
+      status = 'active',
+      notes = '',
+      history
+    } = req.body;
+
+    if (!platform || !account_name || !profile_url) {
+      return res.status(400).json({ error: 'Platform, Account Name, and Profile URL are required.' });
+    }
+
+    const cleanPlatform = platform.toLowerCase().trim();
+    const cleanHandle = handle ? (handle.startsWith('@') ? handle : `@${handle}`) : `@${account_name.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
+    const fCount = parseInt(followers_count, 10) || 0;
+    const flwCount = parseInt(following_count, 10) || 0;
+    const pCount = parseInt(posts_count, 10) || 0;
+    const vCount = parseInt(total_views, 10) || 0;
+    const engRate = parseFloat(engagement_rate) || 0.0;
+    const gTarget = parseInt(goal_target, 10) || 100000;
+
+    let histJson = '';
+    if (history) {
+      histJson = typeof history === 'string' ? history : JSON.stringify(history);
+    } else {
+      histJson = JSON.stringify(generateDefaultHistory(fCount));
+    }
+
+    const result = await run(`
+      INSERT INTO social_accounts (
+        user_id, platform, account_name, handle, profile_url,
+        followers_count, following_count, posts_count, total_views,
+        engagement_rate, category, goal_target, monthly_growth,
+        status, notes, history
+      ) VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `, [
+      cleanPlatform,
+      account_name.trim(),
+      cleanHandle.trim(),
+      profile_url.trim(),
+      fCount,
+      flwCount,
+      pCount,
+      vCount,
+      engRate,
+      category.trim(),
+      gTarget,
+      monthly_growth.trim(),
+      status,
+      notes ? notes.trim() : '',
+      histJson
+    ]);
+
+    const created = await get(`SELECT * FROM social_accounts WHERE id = ?`, [result.lastID]);
+    res.json({
+      success: true,
+      message: 'Social account added successfully!',
+      account: {
+        ...created,
+        history: JSON.parse(created.history || '[]'),
+        color: PLATFORM_COLORS[created.platform.toLowerCase()] || '#6366F1'
+      }
+    });
+  } catch (err) {
+    console.error('Error creating social account:', err);
+    res.status(500).json({ error: 'Failed to create social account.' });
+  }
+});
+
+// 4. Update existing social media account
+app.put('/api/portfolio/:id', async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    const existing = await get(`SELECT * FROM social_accounts WHERE id = ?`, [id]);
+    if (!existing) {
+      return res.status(404).json({ error: 'Account not found.' });
+    }
+
+    const {
+      platform = existing.platform,
+      account_name = existing.account_name,
+      handle = existing.handle,
+      profile_url = existing.profile_url,
+      followers_count = existing.followers_count,
+      following_count = existing.following_count,
+      posts_count = existing.posts_count,
+      total_views = existing.total_views,
+      engagement_rate = existing.engagement_rate,
+      category = existing.category,
+      goal_target = existing.goal_target,
+      monthly_growth = existing.monthly_growth,
+      status = existing.status,
+      notes = existing.notes,
+      history
+    } = req.body;
+
+    const fCount = parseInt(followers_count, 10) || 0;
+    let histJson = existing.history;
+    if (history) {
+      histJson = typeof history === 'string' ? history : JSON.stringify(history);
+    } else if (fCount !== existing.followers_count) {
+      try {
+        const parsed = JSON.parse(existing.history || '[]');
+        if (parsed.length > 0) {
+          parsed[parsed.length - 1].followers = fCount;
+          histJson = JSON.stringify(parsed);
+        } else {
+          histJson = JSON.stringify(generateDefaultHistory(fCount));
+        }
+      } catch (e) {
+        histJson = JSON.stringify(generateDefaultHistory(fCount));
+      }
+    }
+
+    await run(`
+      UPDATE social_accounts SET
+        platform = ?,
+        account_name = ?,
+        handle = ?,
+        profile_url = ?,
+        followers_count = ?,
+        following_count = ?,
+        posts_count = ?,
+        total_views = ?,
+        engagement_rate = ?,
+        category = ?,
+        goal_target = ?,
+        monthly_growth = ?,
+        status = ?,
+        notes = ?,
+        history = ?,
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `, [
+      platform.toLowerCase().trim(),
+      account_name.trim(),
+      handle.trim(),
+      profile_url.trim(),
+      fCount,
+      parseInt(following_count, 10) || 0,
+      parseInt(posts_count, 10) || 0,
+      parseInt(total_views, 10) || 0,
+      parseFloat(engagement_rate) || 0.0,
+      category.trim(),
+      parseInt(goal_target, 10) || 100000,
+      monthly_growth.trim(),
+      status,
+      notes ? notes.trim() : '',
+      histJson,
+      id
+    ]);
+
+    const updated = await get(`SELECT * FROM social_accounts WHERE id = ?`, [id]);
+    res.json({
+      success: true,
+      message: 'Account updated successfully!',
+      account: {
+        ...updated,
+        history: JSON.parse(updated.history || '[]'),
+        color: PLATFORM_COLORS[updated.platform.toLowerCase()] || '#6366F1'
+      }
+    });
+  } catch (err) {
+    console.error('Error updating social account:', err);
+    res.status(500).json({ error: 'Failed to update social account.' });
+  }
+});
+
+// 5. Delete social account
+app.delete('/api/portfolio/:id', async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    const existing = await get(`SELECT id FROM social_accounts WHERE id = ?`, [id]);
+    if (!existing) {
+      return res.status(404).json({ error: 'Account not found.' });
+    }
+
+    await run(`DELETE FROM social_accounts WHERE id = ?`, [id]);
+    res.json({ success: true, message: 'Account deleted successfully.' });
+  } catch (err) {
+    console.error('Error deleting social account:', err);
+    res.status(500).json({ error: 'Failed to delete account.' });
+  }
+});
+
+// ----------------------------------------------------
 // ADMIN API
 // ----------------------------------------------------
 
@@ -775,6 +1136,7 @@ app.get(['/', '/index.php'], (req, res) => res.sendFile(path.join(publicDir, 'in
 app.get(['/browse', '/browse.php'], (req, res) => res.sendFile(path.join(publicDir, 'browse.html')));
 app.get(['/prompt', '/prompt.php'], (req, res) => res.sendFile(path.join(publicDir, 'prompt.html')));
 app.get(['/community', '/community.php'], (req, res) => res.sendFile(path.join(publicDir, 'community.html')));
+app.get(['/portfolio', '/portfolio.html', '/portfolio.php', '/social-portfolio'], (req, res) => res.sendFile(path.join(publicDir, 'portfolio.html')));
 app.get(['/pricing', '/pricing.php'], (req, res) => res.sendFile(path.join(publicDir, 'pricing.html')));
 app.get(['/account', '/account.php'], (req, res) => res.sendFile(path.join(publicDir, 'account.html')));
 app.get(['/login', '/login.php'], (req, res) => res.sendFile(path.join(publicDir, 'login.html')));

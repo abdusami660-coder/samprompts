@@ -41,7 +41,7 @@
       const current = document.documentElement.getAttribute('data-theme') || 'dark';
       const next = current === 'dark' ? 'light' : 'dark';
       this.applyTheme(next, true);
-      this.showToast(next === 'dark' ? '🌙 Dark Mode Activated' : '☀️ Light Mode Activated');
+      this.showToast(next === 'dark' ? '🌙 Cyber Dark Mode Activated' : '☀️ Studio Light Mode Activated');
     },
 
     updateThemeButton(theme) {
@@ -51,7 +51,7 @@
         if (text) {
           text.textContent = theme === 'dark' ? 'Dark' : 'Light';
         }
-        btn.setAttribute('title', `Current: ${theme === 'dark' ? 'Dark' : 'Light'} Mode (Click to switch)`);
+        btn.setAttribute('title', theme === 'dark' ? 'Switch to Studio Light Mode' : 'Switch to Cyber Dark Mode');
       });
     },
 
@@ -119,6 +119,7 @@
         nav.innerHTML = `
           <a href="/" class="${currentPath === '/' || currentPath.endsWith('index.html') ? 'active' : ''}">Home</a>
           <a href="/browse" class="${currentPath.includes('browse') ? 'active' : ''}">All Prompts</a>
+          <a href="/portfolio" class="${currentPath.includes('portfolio') ? 'active' : ''}">📊 Social Portfolio</a>
           <a href="/community" class="${currentPath.includes('community') ? 'active' : ''}">Social Corner</a>
           ${this.user.role === 'admin' ? `
             <a href="/admin" class="${currentPath.includes('admin') ? 'active' : ''}" style="color:var(--primary);font-weight:700;">
@@ -138,8 +139,9 @@
         nav.innerHTML = `
           <a href="/" class="${currentPath === '/' || currentPath.endsWith('index.html') ? 'active' : ''}">Home</a>
           <a href="/browse" class="${currentPath.includes('browse') ? 'active' : ''}">All Prompts</a>
+          <a href="/portfolio" class="${currentPath.includes('portfolio') ? 'active' : ''}">📊 Social Portfolio</a>
           <a href="/community" class="${currentPath.includes('community') ? 'active' : ''}">Social Corner</a>
-          <a href="/pricing" class="${currentPath.includes('pricing') ? 'active' : ''}">Join Community</a>
+          <a href="/pricing" class="${currentPath.includes('pricing') ? 'active' : ''}">👑 VIP Pass</a>
           <a href="/login" class="${currentPath.includes('login') ? 'active' : ''}">Login</a>
           <a href="/register" class="nav-btn">Get Started</a>
         `;
@@ -210,29 +212,86 @@
     },
 
     initCopyButtons() {
-      document.addEventListener('click', (e) => {
-        const btn = e.target.closest('#copy-btn, .copy-prompt-btn');
+      document.addEventListener('click', async (e) => {
+        const quickBtn = e.target.closest('.quick-copy-btn');
+        if (quickBtn) {
+          e.preventDefault();
+          e.stopPropagation();
+          const pid = quickBtn.dataset.promptId;
+          const origHtml = quickBtn.innerHTML;
+          quickBtn.innerHTML = '⏳ Copying…';
+          quickBtn.disabled = true;
+
+          try {
+            const res = await fetch(`/api/prompts/${pid}`);
+            if (!res.ok) throw new Error();
+            const data = await res.json();
+            if (data.is_unlocked && data.prompt_content) {
+              await navigator.clipboard.writeText(data.prompt_content);
+              quickBtn.classList.add('copied');
+              quickBtn.innerHTML = '✓ Copied!';
+              this.showToast(`📋 Copied "${data.title.substring(0, 30)}…" to clipboard!`);
+              fetch(`/api/prompts/${pid}/copy`, { method: 'POST' });
+              setTimeout(() => {
+                quickBtn.classList.remove('copied');
+                quickBtn.innerHTML = origHtml;
+                quickBtn.disabled = false;
+              }, 2000);
+            } else {
+              this.openCheckout();
+              quickBtn.innerHTML = origHtml;
+              quickBtn.disabled = false;
+            }
+          } catch (err) {
+            quickBtn.innerHTML = origHtml;
+            quickBtn.disabled = false;
+            this.showToast('⚠️ Could not copy prompt');
+          }
+          return;
+        }
+
+        const btn = e.target.closest('#copy-btn, .copy-prompt-btn, .copy-master-btn');
         if (!btn) return;
 
-        const targetEl = document.getElementById('prompt-content') || document.querySelector(btn.dataset.target);
+        const targetEl = document.getElementById('prompt-content') || document.querySelector(btn.dataset.target || '');
         if (!targetEl) return;
 
         const text = targetEl.innerText || targetEl.textContent;
-        navigator.clipboard.writeText(text).then(() => {
+        const origHtml = btn.innerHTML;
+
+        const onSuccess = () => {
+          btn.classList.add('copied');
+          btn.innerHTML = '✓ Copied to Clipboard!';
           this.showToast('📋 Master Prompt copied to clipboard!');
           const promptId = btn.dataset.promptId;
           if (promptId) {
             fetch(`/api/prompts/${promptId}/copy`, { method: 'POST' });
           }
-        }).catch(() => {
+          setTimeout(() => {
+            btn.classList.remove('copied');
+            btn.innerHTML = origHtml;
+          }, 2400);
+        };
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(onSuccess).catch(() => {
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            ta.remove();
+            onSuccess();
+          });
+        } else {
           const ta = document.createElement('textarea');
           ta.value = text;
           document.body.appendChild(ta);
           ta.select();
           document.execCommand('copy');
           ta.remove();
-          this.showToast('📋 Master Prompt copied to clipboard!');
-        });
+          onSuccess();
+        }
       });
     },
 

@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Social Media Portfolio & Analytics — Sami Prompts</title>
+  <meta name="description" content="Manage, track, and analyze your social media portfolio across TikTok, YouTube, Instagram, Facebook, X and more. Real-time growth charts, audience reach, and custom account check and balance.">
+  <link rel="icon" type="image/png" href="/assets/img/logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script>
+    (function() {
+      const saved = localStorage.getItem('sami_theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', saved);
+    })();
+  </script>
+</head>
+<body>
+
+  <!-- Site Header -->
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="/" class="brand">
+        <img src="/assets/img/logo.png" alt="Sami Prompts Logo">
+        <span>Sami<b>Prompts</b></span>
+      </a>
+
+      <input type="checkbox" id="nav-toggle" class="nav-toggle-cb" aria-label="Toggle navigation menu">
+      <label for="nav-toggle" class="nav-toggle-label">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+      </label>
+
+      <nav class="main-nav" id="main-nav">
+        <a href="/">Home</a>
+        <a href="/browse">All Prompts <span class="nav-counter" style="background:var(--primary);color:#fff;font-size:11px;padding:2px 7px;border-radius:10px;font-weight:800;margin-left:4px;">312+</span></a>
+        <a href="/portfolio" class="active">📊 Social Portfolio</a>
+        <a href="/community">Social Corner</a>
+        <a href="/pricing" style="color:var(--amber);font-weight:700;">👑 VIP Pass</a>
+        <a href="/login">Login</a>
+        <a href="/register" class="nav-btn">Get Started</a>
+      </nav>
+
+      <div class="header-actions">
+        <button id="theme-toggle-btn" class="theme-toggle-btn" type="button" aria-label="Toggle Dark/Light Mode" title="Toggle Theme">
+          <span class="theme-icon moon-icon">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M12.3 2a10 10 0 0 0-.19 20 10 10 0 0 0 8.09-4.11 1 1 0 0 0-1-1.49 8 8 0 1 1-8.39-14.3 1 1 0 0 0 .49-1.1 1 1 0 0 0-1-.02z"/></svg>
+          </span>
+          <span class="theme-icon sun-icon">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="5"></circle>
+              <line x1="12" y1="1" x2="12" y2="3"></line>
+              <line x1="12" y1="21" x2="12" y2="23"></line>
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+              <line x1="1" y1="12" x2="3" y2="12"></line>
+              <line x1="21" y1="12" x2="23" y2="12"></line>
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+            </svg>
+          </span>
+          <span class="theme-toggle-label">Dark</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="portfolio-page">
+    <div class="container">
+      
+      <!-- Breadcrumbs -->
+      <nav class="breadcrumbs" aria-label="Breadcrumbs" style="padding-top: 24px;">
+        <a href="/">Home</a>
+        <span>/</span>
+        <span style="color:var(--text);font-weight:700;">Social Media Portfolio & Analytics</span>
+      </nav>
+
+      <!-- Portfolio Hero Header -->
+      <section class="portfolio-header">
+        <div class="portfolio-hero-card">
+          <div class="portfolio-hero-content">
+            <div class="portfolio-title-wrap">
+              <span class="portfolio-badge">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                Omnichannel Creator Portfolio
+              </span>
+              <h1 class="portfolio-title">Social Media Portfolio & Analytics</h1>
+              <p class="portfolio-desc">
+                Keep total check & balance of your digital presence. Monitor TikTok, YouTube, Instagram, Facebook, X and custom channels with live growth analytics, video view counts, engagement tracking, and milestone goals.
+              </p>
+            </div>
+            <div class="portfolio-actions">
+              <button type="button" class="btn-add-account" id="open-add-modal-btn">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                + Add Social Account
+              </button>
+              <button type="button" class="btn-export-portfolio" id="export-json-btn" title="Download Media Kit JSON">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                Export JSON
+              </button>
+              <button type="button" class="btn-export-portfolio" id="print-portfolio-btn" title="Print or Save PDF report">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                Print Report
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Omnichannel KPI Metric Cards -->
+      <section class="portfolio-kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-header">
+            <span class="kpi-title">Total Global Reach</span>
+            <div class="kpi-icon-wrap" style="background:rgba(99, 102, 241, 0.15);color:#818cf8;">👥</div>
+          </div>
+          <div class="kpi-val" id="metric-total-followers">0</div>
+          <div class="kpi-trend positive">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+            <span id="metric-followers-growth">+8.4% this month</span>
+          </div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-header">
+            <span class="kpi-title">Total Video Views</span>
+            <div class="kpi-icon-wrap" style="background:rgba(239, 68, 68, 0.15);color:#f87171;">🎬</div>
+          </div>
+          <div class="kpi-val" id="metric-total-views">0</div>
+          <div class="kpi-trend positive">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+            <span>Omnichannel impressions</span>
+          </div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-header">
+            <span class="kpi-title">Avg. Engagement Rate</span>
+            <div class="kpi-icon-wrap" style="background:rgba(16, 185, 129, 0.15);color:#34d399;">⚡</div>
+          </div>
+          <div class="kpi-val" id="metric-avg-engagement">0.0%</div>
+          <div class="kpi-trend positive">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+            <span>Above industry benchmark (2.5%)</span>
+          </div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-header">
+            <span class="kpi-title">Connected Accounts</span>
+            <div class="kpi-icon-wrap" style="background:rgba(245, 158, 11, 0.15);color:#fbbf24;">🌐</div>
+          </div>
+          <div class="kpi-val" id="metric-total-accounts">0</div>
+          <div class="kpi-trend neutral">
+            <span id="metric-active-accounts">0 Active Platforms</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Visual Analytics & Charts Section -->
+      <section class="portfolio-charts-grid">
+        <!-- 1. Growth Timeline Multi-line Chart -->
+        <div class="chart-card">
+          <div class="chart-card-header">
+            <div>
+              <h3 class="chart-card-title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                Audience Growth Timeline (6 Months)
+              </h3>
+              <p class="chart-card-subtitle">Monthly follower progression tracking across all active platforms</p>
+            </div>
+          </div>
+          <div class="chart-container-wrap">
+            <canvas id="growthLineChart"></canvas>
+          </div>
+        </div>
+
+        <!-- 2. Platform Audience Share Doughnut Chart -->
+        <div class="chart-card">
+          <div class="chart-card-header">
+            <div>
+              <h3 class="chart-card-title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path></svg>
+                Platform Audience Share
+              </h3>
+              <p class="chart-card-subtitle">Percentage breakdown of total follower distribution</p>
+            </div>
+          </div>
+          <div class="chart-container-wrap">
+            <canvas id="platformShareChart"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <!-- Secondary Chart: Video Views & Reach Bar Chart -->
+      <section class="chart-secondary-grid">
+        <div class="chart-card">
+          <div class="chart-card-header">
+            <div>
+              <h3 class="chart-card-title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect><line x1="7" y1="2" x2="7" y2="22"></line><line x1="17" y1="2" x2="17" y2="22"></line><line x1="2" y1="12" x2="22" y2="12"></line><line x1="2" y1="7" x2="7" y2="7"></line><line x1="2" y1="17" x2="7" y2="17"></line><line x1="17" y1="17" x2="22" y2="17"></line><line x1="17" y1="7" x2="22" y2="7"></line></svg>
+                Total Video Views & Impressions by Platform
+              </h3>
+              <p class="chart-card-subtitle">Comparing cumulative video plays across TikTok, YouTube, Reels & Feeds</p>
+            </div>
+          </div>
+          <div class="chart-container-wrap">
+            <canvas id="viewsBarChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Milestones & Goals Tracker -->
+        <div class="milestones-card">
+          <div class="chart-card-header" style="margin-bottom: 8px;">
+            <div>
+              <h3 class="chart-card-title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                Milestones & Next Goals Tracker
+              </h3>
+              <p class="chart-card-subtitle">Progress toward key follower milestone targets</p>
+            </div>
+          </div>
+          <div class="milestones-list" id="milestones-container">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+      </section>
+
+      <!-- Toolbar & Filters -->
+      <section class="portfolio-toolbar">
+        <div class="portfolio-search">
+          <span class="portfolio-search-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          </span>
+          <input type="text" id="account-search-input" placeholder="Search account name or handle...">
+        </div>
+
+        <div class="portfolio-filters" id="platform-filter-tabs">
+          <button type="button" class="filter-chip active" data-platform="all">✨ All Platforms</button>
+          <button type="button" class="filter-chip" data-platform="tiktok">🎵 TikTok</button>
+          <button type="button" class="filter-chip" data-platform="youtube">▶️ YouTube</button>
+          <button type="button" class="filter-chip" data-platform="instagram">📸 Instagram</button>
+          <button type="button" class="filter-chip" data-platform="facebook">📘 Facebook</button>
+          <button type="button" class="filter-chip" data-platform="twitter">🐦 X (Twitter)</button>
+          <button type="button" class="filter-chip" data-platform="linkedin">💼 LinkedIn</button>
+          <button type="button" class="filter-chip" data-platform="threads">🧵 Threads</button>
+        </div>
+
+        <div class="portfolio-sort">
+          <label for="portfolio-sort-select">Sort by:</label>
+          <select id="portfolio-sort-select">
+            <option value="followers_desc">Most Followers</option>
+            <option value="views_desc">Most Views</option>
+            <option value="engagement_desc">Highest Engagement</option>
+            <option value="name_asc">Name A → Z</option>
+          </select>
+        </div>
+      </section>
+
+      <!-- Dedicated Categorized Platform Sections Container -->
+      <div id="categorized-platforms-container">
+        <!-- Dynamically rendered per platform category via JS -->
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Modal: Add / Edit Account -->
+  <div class="portfolio-modal-backdrop" id="account-modal-backdrop">
+    <div class="portfolio-modal">
+      <div class="portfolio-modal-header">
+        <h3 class="portfolio-modal-title" id="modal-title">Add Social Media Account</h3>
+        <button type="button" class="modal-close" id="close-modal-btn" aria-label="Close modal">&times;</button>
+      </div>
+      <form id="social-account-form">
+        <input type="hidden" id="account-id-field" value="">
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="platform-field">Platform *</label>
+            <select id="platform-field" required>
+              <option value="tiktok">TikTok</option>
+              <option value="youtube">YouTube</option>
+              <option value="instagram">Instagram</option>
+              <option value="facebook">Facebook</option>
+              <option value="twitter">X (Twitter)</option>
+              <option value="linkedin">LinkedIn</option>
+              <option value="pinterest">Pinterest</option>
+              <option value="twitch">Twitch</option>
+              <option value="threads">Threads</option>
+              <option value="custom">Other / Custom</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="account-name-field">Account / Channel Name *</label>
+            <input type="text" id="account-name-field" placeholder="e.g. Sami AI Studio" required>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="handle-field">Handle / Username *</label>
+            <input type="text" id="handle-field" placeholder="e.g. @samiofficial" required>
+          </div>
+          <div class="form-group">
+            <label for="profile-url-field">Profile / Channel Link *</label>
+            <input type="url" id="profile-url-field" placeholder="https://tiktok.com/@samiofficial" required>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="followers-field">Followers / Subscribers</label>
+            <input type="number" id="followers-field" min="0" value="0" placeholder="e.g. 150000">
+          </div>
+          <div class="form-group">
+            <label for="following-field">Following Count</label>
+            <input type="number" id="following-field" min="0" value="0" placeholder="e.g. 240">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="views-field">Total Video Views / Impressions</label>
+            <input type="number" id="views-field" min="0" value="0" placeholder="e.g. 3500000">
+          </div>
+          <div class="form-group">
+            <label for="posts-field">Total Posts / Videos</label>
+            <input type="number" id="posts-field" min="0" value="0" placeholder="e.g. 85">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="engagement-field">Engagement Rate (%)</label>
+            <input type="number" id="engagement-field" step="0.1" min="0" max="100" value="4.5" placeholder="e.g. 5.2">
+          </div>
+          <div class="form-group">
+            <label for="growth-field">Monthly Growth Tag</label>
+            <input type="text" id="growth-field" value="+5.0%" placeholder="e.g. +12.4%">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="goal-target-field">Next Follower Goal / Milestone</label>
+            <input type="number" id="goal-target-field" min="100" value="250000" placeholder="e.g. 500000">
+          </div>
+          <div class="form-group">
+            <label for="category-field">Category / Niche</label>
+            <input type="text" id="category-field" value="AI & Tech" placeholder="e.g. AI & Tech, Shorts, Filmmaking">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="status-field">Status</label>
+            <select id="status-field">
+              <option value="active">Active & Growing</option>
+              <option value="paused">Paused / Inactive</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="notes-field">Quick Strategy Notes</label>
+            <input type="text" id="notes-field" placeholder="e.g. Focus on 10s AI video hooks daily">
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" id="cancel-modal-btn">Cancel</button>
+          <button type="submit" class="btn-primary" id="save-account-btn">Save Account</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- WhatsApp Float -->
+  <a href="https://wa.me/923086968007?text=Hi%20Sami,%20I%20have%20a%20question%20about%20your%20prompts%20and%20social%20portfolio!" class="wa-float" target="_blank" rel="noopener noreferrer" aria-label="Chat on WhatsApp">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91C2.13 13.66 2.59 15.36 3.45 16.86L2.05 22L7.3 20.62C8.75 21.41 10.38 21.83 12.04 21.83C17.5 21.83 21.95 17.38 21.95 11.92C21.95 9.27 20.92 6.78 19.05 4.91C17.18 3.03 14.69 2 12.04 2M12.05 3.67C14.25 3.67 16.31 4.53 17.87 6.09C19.42 7.65 20.28 9.72 20.28 11.92C20.28 16.46 16.58 20.15 12.04 20.15C10.56 20.15 9.11 19.76 7.85 19L7.55 18.83L4.43 19.65L5.26 16.61L5.06 16.29C4.24 15 3.8 13.47 3.8 11.91C3.81 7.37 7.5 3.67 12.05 3.67M9.53 7.07C9.33 7.07 9.1 7.08 8.9 7.32C8.7 7.55 8.13 8.09 8.13 9.18C8.13 10.27 8.92 11.33 9.03 11.48C9.14 11.63 10.56 13.82 12.75 14.77C14.56 15.55 14.93 15.4 15.34 15.36C15.75 15.32 16.67 14.81 16.86 14.28C17.05 13.74 17.05 13.28 16.99 13.18C16.93 13.08 16.78 13.03 16.55 12.91C16.32 12.8 15.19 12.24 14.98 12.16C14.77 12.09 14.62 12.05 14.47 12.28C14.32 12.51 13.89 13.03 13.76 13.18C13.63 13.33 13.5 13.35 13.27 13.24C13.04 13.12 12.3 12.88 11.43 12.1C10.74 11.49 10.28 10.74 10.15 10.51C10.02 10.28 10.14 10.16 10.25 10.04C10.36 9.93 10.49 9.76 10.61 9.62C10.73 9.48 10.77 9.38 10.85 9.23C10.93 9.08 10.89 8.94 10.83 8.83C10.77 8.72 10.22 7.37 10 6.84C9.78 6.32 9.56 6.39 9.39 6.39C9.23 6.39 9.03 6.39 8.83 6.39L9.53 7.07Z"/></svg>
+    <span>WhatsApp</span>
+  </a>
+
+  <!-- Site Footer -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <img src="/assets/img/logo.png" alt="Sami Prompts Logo">
+          <span>Sami<b>Prompts</b></span>
+          <span class="footer-tag">VIP AI Video Storyboards & Social Portfolio</span>
+        </div>
+        <div class="footer-links">
+          <a href="/">Home</a>
+          <a href="/browse">All Prompts</a>
+          <a href="/portfolio">Social Portfolio</a>
+          <a href="/community">Social Corner</a>
+          <a href="/pricing">VIP Access</a>
+          <a href="/terms">Terms</a>
+          <a href="/privacy">Privacy</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2026 Sami Prompts. All rights reserved. Built for modern AI creators and filmmakers.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/assets/js/main.js"></script>
+  <script src="/assets/js/portfolio.js"></script>
+</body>
+</html>
