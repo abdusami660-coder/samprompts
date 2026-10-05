@@ -256,8 +256,21 @@ app.get('/api/prompts/:id', async (req, res) => {
     await run(`UPDATE prompts SET views_count = views_count + 1 WHERE id = ?`, [id]);
 
     const user = await getCurrentUser(req);
-    const isPremiumUser = user && user.membership_status === 'premium';
-    const isUnlocked = prompt.type === 'free' || isPremiumUser;
+    let isUnlocked = false;
+    let lockReason = 'guest';
+
+    if (user) {
+      const isPremium = user.membership_status === 'premium' || user.role === 'admin';
+      if (isPremium) {
+        isUnlocked = true;
+      } else {
+        isUnlocked = (prompt.type === 'free');
+        if (!isUnlocked) lockReason = 'premium_required';
+      }
+    } else {
+      isUnlocked = false;
+      lockReason = 'guest';
+    }
 
     const storyboards = prompt.storyboards ? JSON.parse(prompt.storyboards) : [];
 
@@ -274,7 +287,8 @@ app.get('/api/prompts/:id', async (req, res) => {
         copies_count: prompt.copies_count,
         created_at: prompt.created_at,
         is_unlocked: false,
-        requires_membership: true,
+        lock_reason: lockReason,
+        requires_membership: prompt.type === 'premium',
         user_logged_in: !!user,
         prompt_content: null,
         storyboards: [] // hide full storyboard downloads if locked

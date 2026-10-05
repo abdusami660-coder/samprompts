@@ -199,27 +199,55 @@
             ${storyboardsHtml}
           `;
         } else {
-          // Locked view
-          contentBlockHtml = `
-            <div class="locked-box" style="margin-top:24px;">
-              <div class="teaser">${escapeHtml(prompt.teaser)}</div>
-              <div class="lock-panel">
-                <div class="ico">🔒</div>
-                <h3>Premium Master Prompt</h3>
-                <p>This prompt is available exclusively for active community members.</p>
-                <div class="lock-buttons">
-                  <button type="button" class="btn btn-primary btn-lg" onclick="NP.openCheckout()">
-                    Subscribe — $5/month
-                  </button>
-                  ${prompt.user_logged_in ? '' : `
-                    <a href="/login?next=${encodeURIComponent(window.location.pathname + window.location.search)}" class="btn btn-outline">
-                      Already a member? Login
+          // Locked view: Guest vs Logged-in Free User
+          if (prompt.lock_reason === 'guest') {
+            contentBlockHtml = `
+              <div class="locked-box" style="margin-top:24px;">
+                <div class="teaser">${escapeHtml(prompt.teaser)}</div>
+                <div class="lock-panel" style="padding:36px 20px;text-align:center;">
+                  <div class="ico" style="font-size:48px;margin-bottom:12px;">🔒</div>
+                  <h3 style="font-size:24px;font-weight:900;margin-bottom:8px;color:var(--text);">Access Restricted — Login Ya Buy VIP Access</h3>
+                  <p style="color:var(--muted);font-size:15px;max-width:540px;margin:0 auto 24px;line-height:1.6;">
+                    Viral prompts dekhne aur copy karne ke liye login karein ya VIP Pass hasil karein.<br>
+                    Free account bana kar <strong>free prompts unlock</strong> karein, ya <strong>VIP Creator Pass (Rs 999/mo)</strong> se tamam 319+ master directives hasil karein.
+                  </p>
+                  <div class="lock-buttons" style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+                    <a href="/login?next=${encodeURIComponent(window.location.pathname + window.location.search)}" class="btn btn-primary btn-lg">
+                      🔑 Login to View Prompts
                     </a>
-                  `}
+                    <button type="button" class="btn btn-outline btn-lg" onclick="NP.openCheckout()" style="border-color:#10B981;color:#10B981;">
+                      ⚡ Buy VIP Access (Rs 999)
+                    </button>
+                    <a href="/register?next=${encodeURIComponent(window.location.pathname + window.location.search)}" class="btn btn-outline btn-lg">
+                      📝 Create Free Account
+                    </a>
+                  </div>
                 </div>
               </div>
-            </div>
-          `;
+            `;
+          } else {
+            // Logged in as Free user trying to view a Premium prompt
+            contentBlockHtml = `
+              <div class="locked-box" style="margin-top:24px;">
+                <div class="teaser">${escapeHtml(prompt.teaser)}</div>
+                <div class="lock-panel" style="padding:36px 20px;text-align:center;">
+                  <div class="ico" style="font-size:48px;margin-bottom:12px;">⭐</div>
+                  <h3 style="font-size:24px;font-weight:900;margin-bottom:8px;color:var(--text);">VIP Membership Required</h3>
+                  <p style="color:var(--muted);font-size:15px;max-width:520px;margin:0 auto 24px;line-height:1.6;">
+                    Ye ek <strong>Premium Viral Master Prompt</strong> hai. Is prompt aur tamam 319+ viral video systems ko unlock karne ke liye VIP Creator Pass active karein.
+                  </p>
+                  <div class="lock-buttons" style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+                    <button type="button" class="btn btn-primary btn-lg" onclick="NP.openCheckout()">
+                      ⚡ Unlock with VIP Pass (Rs 999 / month)
+                    </button>
+                    <a href="/pricing" class="btn btn-outline btn-lg">
+                      View Pricing Details
+                    </a>
+                  </div>
+                </div>
+              </div>
+            `;
+          }
         }
 
         const dateFormatted = prompt.created_at ? new Date(prompt.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Recently';

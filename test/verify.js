@@ -23,21 +23,49 @@ async function runTests() {
   assert(pData.total >= 16, 'Total prompts should be at least 16');
   console.log(`   ✓ Found ${pData.total} prompts in database.\n`);
 
-  // 3. Free Prompt Gating (Prompt 270)
-  console.log('3. Checking free prompt access (Prompt 270)...');
-  const freeRes = await fetch(BASE + '/api/prompts/270');
-  const freeData = await freeRes.json();
-  assert.strictEqual(freeData.is_unlocked, true, 'Free prompt must be unlocked');
-  assert(freeData.prompt_content && freeData.prompt_content.length > 1000, 'Free prompt content must be accessible');
-  console.log('   ✓ Free prompt accessible to public guests without login.\n');
+  // 3. Guest Prompt Access: All prompts locked for guests (must show login/buy prompt)
+  console.log('3. Checking guest prompt access (all prompts must be locked for guests)...');
+  const guestFreeRes = await fetch(BASE + '/api/prompts/270');
+  const guestFreeData = await guestFreeRes.json();
+  assert.strictEqual(guestFreeData.is_unlocked, false, 'Free prompt must be locked for unauthenticated guests');
+  assert.strictEqual(guestFreeData.lock_reason, 'guest', 'Lock reason for guest must be "guest"');
+  assert.strictEqual(guestFreeData.prompt_content, null, 'Prompt content must not be sent to guests');
 
-  // 4. Premium Prompt Gating (Prompt 282)
-  console.log('4. Checking premium prompt gating for guests (Prompt 282)...');
-  const premRes = await fetch(BASE + '/api/prompts/282');
-  const premData = await premRes.json();
-  assert.strictEqual(premData.is_unlocked, false, 'Premium prompt must be locked for guests');
-  assert.strictEqual(premData.prompt_content, null, 'Premium prompt content must not be sent to guests');
-  console.log('   ✓ Premium prompt properly locked for guests.\n');
+  const guestPremRes = await fetch(BASE + '/api/prompts/282');
+  const guestPremData = await guestPremRes.json();
+  assert.strictEqual(guestPremData.is_unlocked, false, 'Premium prompt must be locked for guests');
+  assert.strictEqual(guestPremData.lock_reason, 'guest');
+  assert.strictEqual(guestPremData.prompt_content, null);
+  console.log('   ✓ All prompts successfully locked for guests with "Login or Buy VIP" requirement.\n');
+
+  // 4. Logged-in Free User Access: Free prompts unlocked, Premium prompts locked
+  console.log('4. Checking logged-in free user access (free unlocked, premium locked)...');
+  const freeUserEmail = `freeuser_${Date.now()}@samiprompts.com`;
+  const regFreeRes = await fetch(BASE + '/api/auth/register', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name: 'Free User Tester', email: freeUserEmail, password: 'Password123!' })
+  });
+  assert.strictEqual(regFreeRes.status, 200);
+  const freeUserCookie = regFreeRes.headers.get('set-cookie');
+
+  // Test Free Prompt with Free User session -> should be UNLOCKED
+  const freePromptRes = await fetch(BASE + '/api/prompts/270', {
+    headers: { 'Cookie': freeUserCookie }
+  });
+  const freePromptData = await freePromptRes.json();
+  assert.strictEqual(freePromptData.is_unlocked, true, 'Free prompt must be unlocked for logged-in free user');
+  assert(freePromptData.prompt_content && freePromptData.prompt_content.length > 500, 'Free prompt content must be accessible');
+
+  // Test Premium Prompt with Free User session -> should be LOCKED with premium_required
+  const premPromptRes = await fetch(BASE + '/api/prompts/282', {
+    headers: { 'Cookie': freeUserCookie }
+  });
+  const premPromptData = await premPromptRes.json();
+  assert.strictEqual(premPromptData.is_unlocked, false, 'Premium prompt must be locked for free user');
+  assert.strictEqual(premPromptData.lock_reason, 'premium_required', 'Lock reason must be "premium_required"');
+  assert.strictEqual(premPromptData.prompt_content, null, 'Premium prompt content must be null for free user');
+  console.log('   ✓ Logged-in free user can access free prompts, while paid prompts remain locked.\n');
 
   // 5. Security: Guest rejected from Admin endpoints
   console.log('5. Verifying security: Guest access to Admin API is forbidden...');
