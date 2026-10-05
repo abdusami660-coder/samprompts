@@ -235,6 +235,12 @@
           <button type="button" class="tab-btn" data-tab="tab-community" onclick="switchTab('tab-community')">
             💬 Community Feed
           </button>
+          <button type="button" class="tab-btn" data-tab="tab-payments" onclick="switchTab('tab-payments')">
+            💳 Payment Requests (<span id="tab-count-payments" style="background:#10B981;color:#fff;padding:2px 7px;border-radius:10px;font-size:11px;">0</span>)
+          </button>
+          <button type="button" class="tab-btn" data-tab="tab-payment-settings" onclick="switchTab('tab-payment-settings')">
+            ⚙️ Payment Settings
+          </button>
         </div>
 
         <!-- TAB 1: ADD / EDIT PROMPT -->
@@ -389,6 +395,118 @@
           </div>
         </div>
 
+        <!-- TAB 5: PAYMENT REQUESTS & VERIFICATION -->
+        <div id="tab-payments" class="tab-pane" style="display:none;">
+          <div class="acc-card">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:18px;">
+              <div>
+                <h3 style="font-size:20px;margin-bottom:4px;">💳 Payment Requests & VIP Activations</h3>
+                <p style="font-size:13.5px;color:var(--muted);margin:0;">Review EasyPaisa, SadaPay, and Meezan Bank slips to activate 30-day VIP memberships.</p>
+              </div>
+              <div style="display:flex;gap:8px;">
+                <button type="button" class="btn btn-sm btn-outline" onclick="loadPaymentRequests('all')">All</button>
+                <button type="button" class="btn btn-sm btn-outline" style="border-color:#F59E0B;color:#F59E0B;" onclick="loadPaymentRequests('pending')">Pending Only</button>
+                <button type="button" class="btn btn-sm btn-outline" style="border-color:#10B981;color:#10B981;" onclick="loadPaymentRequests('approved')">Approved</button>
+              </div>
+            </div>
+
+            <div style="overflow-x:auto;">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>User & Account</th>
+                    <th>Method</th>
+                    <th>Amount</th>
+                    <th>Transaction ID (TID)</th>
+                    <th>Receipt Slip</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="payments-tbody">
+                  <tr><td colspan="8" style="text-align:center;padding:30px;color:var(--muted);">Loading payment requests…</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 6: PAYMENT SETTINGS -->
+        <div id="tab-payment-settings" class="tab-pane" style="display:none;">
+          <div class="acc-card" style="max-width:760px;">
+            <h3 style="font-size:20px;margin-bottom:6px;">⚙️ Payment Gateway & Account Settings</h3>
+            <p style="font-size:13.5px;color:var(--muted);margin-bottom:24px;">Configure the EasyPaisa, SadaPay, and Meezan Bank accounts shown to customers during checkout.</p>
+            
+            <form id="payment-settings-form" onsubmit="savePaymentSettings(event)">
+              
+              <h4 style="font-size:16px;color:#10B981;margin-bottom:12px;display:flex;align-items:center;gap:6px;">
+                <span>📱</span> EasyPaisa Account Details
+              </h4>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;">
+                <div class="fld">
+                  <label>EasyPaisa Account Title</label>
+                  <input type="text" id="set-easypaisa-title" required value="Abdul sami shahid">
+                </div>
+                <div class="fld">
+                  <label>EasyPaisa Mobile Number</label>
+                  <input type="text" id="set-easypaisa-number" required value="03119405981">
+                </div>
+              </div>
+
+              <h4 style="font-size:16px;color:#EC4899;margin-bottom:12px;display:flex;align-items:center;gap:6px;">
+                <span>🟣</span> SadaPay Account Details
+              </h4>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;">
+                <div class="fld">
+                  <label>SadaPay Account Title</label>
+                  <input type="text" id="set-sadapay-title" required value="Abdul sami shahid">
+                </div>
+                <div class="fld">
+                  <label>SadaPay Mobile Number / IBAN</label>
+                  <input type="text" id="set-sadapay-number" required value="03275693976">
+                </div>
+              </div>
+
+              <h4 style="font-size:16px;color:#0284C7;margin-bottom:12px;display:flex;align-items:center;gap:6px;">
+                <span>🏦</span> Meezan Bank Account Details
+              </h4>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;">
+                <div class="fld">
+                  <label>Meezan Bank Account Title</label>
+                  <input type="text" id="set-meezan-title" value="Abdul sami shahid">
+                </div>
+                <div class="fld">
+                  <label>Meezan Account Number / IBAN</label>
+                  <input type="text" id="set-meezan-account" value="Contact on WhatsApp">
+                </div>
+              </div>
+
+              <h4 style="font-size:16px;color:var(--primary);margin-bottom:12px;display:flex;align-items:center;gap:6px;">
+                <span>💰</span> Pricing & WhatsApp Support
+              </h4>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:24px;">
+                <div class="fld">
+                  <label>Monthly Price (PKR)</label>
+                  <input type="number" id="set-price-pkr" required value="999">
+                </div>
+                <div class="fld">
+                  <label>Monthly Price (USD)</label>
+                  <input type="number" id="set-price-usd" required value="5">
+                </div>
+                <div class="fld">
+                  <label>WhatsApp Number (without +)</label>
+                  <input type="text" id="set-whatsapp-number" required value="923119405981">
+                </div>
+              </div>
+
+              <button type="submit" id="save-settings-btn" class="btn btn-primary btn-lg">
+                💾 Save Payment Settings
+              </button>
+            </form>
+          </div>
+        </div>
+
       </div>
     </div>
   </main>
@@ -429,7 +547,8 @@
       await Promise.all([
         loadStats(),
         loadCategories(),
-        loadPrompts()
+        loadPrompts(),
+        loadPaymentRequests()
       ]);
     }
 
@@ -550,6 +669,8 @@
 
       if (tabId === 'tab-library') renderLibraryTable();
       if (tabId === 'tab-community') loadCommunityPosts();
+      if (tabId === 'tab-payments') loadPaymentRequests();
+      if (tabId === 'tab-payment-settings') loadPaymentSettings();
     }
 
     // Quick Templates
@@ -752,6 +873,209 @@
       const div = document.createElement('div');
       div.innerText = text;
       return div.innerHTML;
+    }
+
+    // ----------------------------------------------------
+    // PAYMENT REQUESTS & SETTINGS MANAGEMENT
+    // ----------------------------------------------------
+    let allPayments = [];
+
+    async function loadPaymentRequests(filter = 'all') {
+      try {
+        const res = await fetch('/api/admin/payments');
+        const data = await res.json();
+        allPayments = data.payments || [];
+
+        // Count pending
+        const pendingCount = allPayments.filter(p => p.status === 'pending').length;
+        const countBadge = document.getElementById('tab-count-payments');
+        if (countBadge) {
+          countBadge.textContent = pendingCount;
+          countBadge.style.background = pendingCount > 0 ? '#EF4444' : '#10B981';
+        }
+
+        const tbody = document.getElementById('payments-tbody');
+        if (!tbody) return;
+
+        let filtered = allPayments;
+        if (filter !== 'all') {
+          filtered = allPayments.filter(p => p.status === filter);
+        }
+
+        if (filtered.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:36px;color:var(--muted);">No ${filter !== 'all' ? filter : ''} payment requests found.</td></tr>`;
+          return;
+        }
+
+        tbody.innerHTML = filtered.map(p => {
+          const dateStr = new Date(p.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+          const methodColors = {
+            easypaisa: '#10B981',
+            sadapay: '#EC4899',
+            meezan: '#0284C7',
+            online_card: '#8B5CF6'
+          };
+          const methodColor = methodColors[p.payment_method] || 'var(--primary)';
+          const slipHtml = p.screenshot_url ? `
+            <a href="${p.screenshot_url}" target="_blank" style="display:inline-flex;align-items:center;gap:4px;color:var(--primary);font-weight:700;">
+              <img src="${p.screenshot_url}" style="width:36px;height:36px;object-fit:cover;border-radius:6px;border:1px solid var(--border);">
+              <span>View Slip ↗</span>
+            </a>
+          ` : `<span style="color:var(--muted);font-size:12px;">No screenshot</span>`;
+
+          const statusHtml = `
+            <span class="payment-status-badge ${p.status}">
+              ${p.status === 'pending' ? '⏳ Pending' : (p.status === 'approved' ? '✅ Approved' : '❌ Rejected')}
+            </span>
+          `;
+
+          const actionsHtml = p.status === 'pending' ? `
+            <div style="display:flex;gap:6px;">
+              <button type="button" class="btn btn-sm btn-primary" onclick="approvePayment(${p.id}, '${escapeHtml(p.user_email)}')">
+                ✅ Approve
+              </button>
+              <button type="button" class="btn btn-sm btn-danger" onclick="rejectPayment(${p.id})">
+                ❌ Reject
+              </button>
+            </div>
+          ` : `
+            <span style="font-size:12px;color:var(--muted);">
+              ${p.reviewed_at ? 'Reviewed ' + new Date(p.reviewed_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) : 'Done'}
+            </span>
+          `;
+
+          return `
+            <tr>
+              <td style="font-size:12.5px;color:var(--muted);">${dateStr}</td>
+              <td>
+                <strong>${escapeHtml(p.user_name || 'Customer')}</strong>
+                <div style="font-size:12px;color:var(--muted);">${escapeHtml(p.user_email)}</div>
+                ${p.sender_number ? `<div style="font-size:11.5px;color:var(--primary);">Sender: ${escapeHtml(p.sender_number)}</div>` : ''}
+              </td>
+              <td>
+                <span style="font-weight:700;color:${methodColor};text-transform:uppercase;font-size:12.5px;">
+                  ${escapeHtml(p.payment_method)}
+                </span>
+              </td>
+              <td>
+                <strong style="color:var(--text);font-size:15px;">Rs ${p.amount}</strong>
+              </td>
+              <td>
+                <code style="font-size:13px;font-weight:700;background:var(--card-solid);padding:3px 6px;border-radius:4px;">
+                  ${escapeHtml(p.transaction_id)}
+                </code>
+              </td>
+              <td>${slipHtml}</td>
+              <td>${statusHtml}</td>
+              <td>${actionsHtml}</td>
+            </tr>
+          `;
+        }).join('');
+      } catch (e) {
+        console.error('Error loading payments:', e);
+      }
+    }
+
+    async function approvePayment(id, email) {
+      if (!confirm(`Are you sure you want to approve payment #${id} and activate 30-Day VIP access for ${email}?`)) {
+        return;
+      }
+      try {
+        const res = await fetch(`/api/admin/payments/${id}/approve`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ admin_notes: 'Approved via Admin Studio' })
+        });
+        const data = await res.json();
+        if (data.success) {
+          window.NP.showToast(`🎉 VIP Activated for ${email}!`);
+          await loadPaymentRequests();
+        } else {
+          alert(data.error || 'Failed to approve payment');
+        }
+      } catch (err) {
+        alert('Network error while approving payment');
+      }
+    }
+
+    async function rejectPayment(id) {
+      const reason = prompt('Please enter reason for rejection (optional):', 'Invalid TID or payment not received');
+      if (reason === null) return;
+
+      try {
+        const res = await fetch(`/api/admin/payments/${id}/reject`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ admin_notes: reason })
+        });
+        const data = await res.json();
+        if (data.success) {
+          window.NP.showToast('Payment marked as rejected');
+          await loadPaymentRequests();
+        } else {
+          alert(data.error || 'Failed to reject payment');
+        }
+      } catch (err) {
+        alert('Network error while rejecting payment');
+      }
+    }
+
+    async function loadPaymentSettings() {
+      try {
+        const res = await fetch('/api/payment/settings');
+        const data = await res.json();
+        if (!data.settings) return;
+        const s = data.settings;
+        if (s.easypaisa_title) document.getElementById('set-easypaisa-title').value = s.easypaisa_title;
+        if (s.easypaisa_number) document.getElementById('set-easypaisa-number').value = s.easypaisa_number;
+        if (s.sadapay_title) document.getElementById('set-sadapay-title').value = s.sadapay_title;
+        if (s.sadapay_number) document.getElementById('set-sadapay-number').value = s.sadapay_number;
+        if (s.meezan_title) document.getElementById('set-meezan-title').value = s.meezan_title;
+        if (s.meezan_account) document.getElementById('set-meezan-account').value = s.meezan_account;
+        if (s.price_pkr) document.getElementById('set-price-pkr').value = s.price_pkr;
+        if (s.price_usd) document.getElementById('set-price-usd').value = s.price_usd;
+        if (s.whatsapp_number) document.getElementById('set-whatsapp-number').value = s.whatsapp_number;
+      } catch (err) {
+        console.error('Error loading payment settings:', err);
+      }
+    }
+
+    async function savePaymentSettings(e) {
+      e.preventDefault();
+      const btn = document.getElementById('save-settings-btn');
+      btn.disabled = true;
+      btn.textContent = 'Saving…';
+
+      try {
+        const payload = {
+          easypaisa_title: document.getElementById('set-easypaisa-title').value.trim(),
+          easypaisa_number: document.getElementById('set-easypaisa-number').value.trim(),
+          sadapay_title: document.getElementById('set-sadapay-title').value.trim(),
+          sadapay_number: document.getElementById('set-sadapay-number').value.trim(),
+          meezan_title: document.getElementById('set-meezan-title').value.trim(),
+          meezan_account: document.getElementById('set-meezan-account').value.trim(),
+          price_pkr: document.getElementById('set-price-pkr').value.trim(),
+          price_usd: document.getElementById('set-price-usd').value.trim(),
+          whatsapp_number: document.getElementById('set-whatsapp-number').value.trim()
+        };
+
+        const res = await fetch('/api/admin/payment-settings', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.success) {
+          window.NP.showToast('✅ Payment settings saved successfully!');
+        } else {
+          alert(data.error || 'Failed to save settings');
+        }
+      } catch (err) {
+        alert('Error saving payment settings');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '💾 Save Payment Settings';
+      }
     }
   </script>
 </body>

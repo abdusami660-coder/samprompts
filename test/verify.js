@@ -271,8 +271,87 @@ cartoon, blurry, low resolution, bad hands, distorted faces, watermark, flickeri
   assert.strictEqual(delAccData.success, true);
   console.log(`   ✓ Deleted test account ID ${testAccId} successfully.\n`);
 
+  // 17. Testing EasyPaisa, SadaPay & Meezan Payment Gateway & VIP Verification System
+  console.log('17. Testing EasyPaisa, SadaPay & Meezan Payment Gateway & VIP Verification...');
+  // a. GET /api/payment/settings
+  const paySetRes = await fetch(BASE + '/api/payment/settings');
+  assert.strictEqual(paySetRes.status, 200, 'Payment settings should return 200');
+  const paySetData = await paySetRes.json();
+  assert.strictEqual(paySetData.success, true);
+  assert.strictEqual(paySetData.settings.easypaisa_number, '03119405981');
+  assert.strictEqual(paySetData.settings.sadapay_number, '03275693976');
+  assert.strictEqual(paySetData.settings.price_pkr, '999');
+  console.log(`   ✓ Verified payment settings: EasyPaisa (03119405981), SadaPay (03275693976), Price (Rs 999).`);
+
+  // b. Create a new test buyer user
+  const buyerEmail = `buyer_${Date.now()}@samiprompts.com`;
+  const regBuyerRes = await fetch(BASE + '/api/auth/register', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name: 'VIP Buyer Ali', email: buyerEmail, password: 'Password123!' })
+  });
+  assert.strictEqual(regBuyerRes.status, 200);
+  const buyerCookie = regBuyerRes.headers.get('set-cookie');
+
+  // c. Submit payment proof as buyer
+  console.log('   Submitting EasyPaisa payment proof...');
+  const paySubmitRes = await fetch(BASE + '/api/payment/submit', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Cookie': buyerCookie
+    },
+    body: new URLSearchParams({
+      payment_method: 'easypaisa',
+      transaction_id: 'EP9988776655',
+      sender_name: 'VIP Buyer Ali',
+      sender_number: '03001234567',
+      notes: 'Please activate quickly'
+    }).toString()
+  });
+  assert.strictEqual(paySubmitRes.status, 200, 'Submit payment should return 200');
+  const paySubmitData = await paySubmitRes.json();
+  assert.strictEqual(paySubmitData.success, true);
+  assert(paySubmitData.request_id, 'Request ID must be returned');
+  const payReqId = paySubmitData.request_id;
+  console.log(`   ✓ Submitted EasyPaisa proof (TID: EP9988776655, Request ID: ${payReqId}).`);
+
+  // d. Admin lists payment requests and finds pending request
+  console.log('   Admin fetching payment requests...');
+  const adminPayRes = await fetch(BASE + '/api/admin/payments', {
+    headers: { 'Cookie': cookie }
+  });
+  assert.strictEqual(adminPayRes.status, 200);
+  const adminPayData = await adminPayRes.json();
+  assert.strictEqual(adminPayData.success, true);
+  const foundReq = adminPayData.payments.find(p => p.id === payReqId);
+  assert(foundReq, 'Submitted payment request should appear in admin list');
+  assert.strictEqual(foundReq.status, 'pending');
+  console.log(`   ✓ Admin verified pending payment request #${payReqId} from ${buyerEmail}.`);
+
+  // e. Admin approves payment request
+  console.log(`   Admin approving payment #${payReqId}...`);
+  const approveRes = await fetch(BASE + `/api/admin/payments/${payReqId}/approve`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Cookie': cookie },
+    body: JSON.stringify({ admin_notes: 'Verified in EasyPaisa statement' })
+  });
+  assert.strictEqual(approveRes.status, 200);
+  const approveData = await approveRes.json();
+  assert.strictEqual(approveData.success, true);
+  console.log(`   ✓ Payment #${payReqId} approved!`);
+
+  // f. Check buyer profile now has active VIP premium membership
+  const checkBuyerRes = await fetch(BASE + '/api/auth/me', {
+    headers: { 'Cookie': buyerCookie }
+  });
+  const checkBuyerData = await checkBuyerRes.json();
+  assert.strictEqual(checkBuyerData.user.membership_status, 'premium', 'Buyer membership must be premium after approval');
+  assert(checkBuyerData.user.membership_expires_at, 'Buyer membership must have expiry date set');
+  console.log(`   ✓ Buyer ${buyerEmail} membership verified: status="premium", expires="${checkBuyerData.user.membership_expires_at}".\n`);
+
   console.log('═══════════════════════════════════════════════════════════');
-  console.log('🎉 ALL 16 TEST SUITE ASSERTIONS PASSED WITH FLYING COLORS! 🚀');
+  console.log('🎉 ALL 17 TEST SUITE ASSERTIONS PASSED WITH FLYING COLORS! 🚀');
   console.log('═══════════════════════════════════════════════════════════\n');
 }
 

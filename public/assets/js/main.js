@@ -334,70 +334,132 @@
       });
     },
 
-    openCheckout() {
+    paymentSettings: {
+      price_pkr: '999',
+      price_usd: '5',
+      easypaisa_number: '03119405981',
+      easypaisa_title: 'Abdul sami shahid',
+      sadapay_number: '03275693976',
+      sadapay_title: 'Abdul sami shahid',
+      meezan_title: 'Abdul sami shahid',
+      meezan_account: 'Contact on WhatsApp',
+      meezan_iban: 'PK... (Available on WhatsApp)',
+      whatsapp_number: '923119405981'
+    },
+    activePayMethod: 'easypaisa',
+
+    async openCheckout() {
       if (!this.user) {
         window.location.href = '/login?next=/pricing';
         return;
       }
 
-      let modal = document.getElementById('checkout-modal');
-      if (!modal) {
-        modal = document.createElement('div');
-        modal.id = 'checkout-modal';
-        modal.className = 'modal-overlay';
-        modal.innerHTML = `
-          <div class="modal-card">
-            <button class="modal-close" onclick="NP.closeCheckout()">×</button>
-            <div style="text-align:center;margin-bottom:20px;">
-              <span class="price-badge">Instant Activation</span>
-              <h2 style="font-size:22px;margin:12px 0 4px;">Join Sami Prompts Community</h2>
-              <p style="color:var(--muted);font-size:14px;">$5.00 / month · Unlock all viral prompts & downloads</p>
-            </div>
-
-            <div style="background:#F8F7FC;border-radius:12px;padding:16px;margin-bottom:20px;font-size:13.5px;">
-              <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
-                <span>Plan:</span><strong>Premium VIP Membership</strong>
-              </div>
-              <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
-                <span>Account:</span><strong>${this.user.email}</strong>
-              </div>
-              <div style="display:flex;justify-content:space-between;">
-                <span>Total Due:</span><strong style="color:var(--primary);font-size:16px;">$5.00 USD</strong>
-              </div>
-            </div>
-
-            <div id="checkout-alert" class="alert-msg"></div>
-
-            <form id="checkout-form" onsubmit="NP.processPayment(event)">
-              <div class="fld">
-                <label>Cardholder Name</label>
-                <input type="text" id="pay-name" value="${this.user.name}" required>
-              </div>
-              <div class="fld">
-                <label>Card Number (Simulation)</label>
-                <input type="text" id="pay-card" value="4242 •••• •••• 4242" required>
-              </div>
-              <div style="display:flex;gap:12px;">
-                <div class="fld" style="flex:1;">
-                  <label>Expires</label>
-                  <input type="text" value="12/28" required>
-                </div>
-                <div class="fld" style="flex:1;">
-                  <label>CVC</label>
-                  <input type="text" value="987" required>
-                </div>
-              </div>
-              <button type="submit" id="pay-submit-btn" class="btn btn-primary btn-block btn-lg" style="margin-top:10px;">
-                Pay $5.00 & Activate Access
-              </button>
-            </form>
-            <p style="text-align:center;color:var(--muted);font-size:12px;margin-top:14px;">
-              🔒 256-bit encrypted checkout simulator. Instant VIP upgrade.
-            </p>
-          </div>
-        `;
-        document.body.appendChild(modal);
+      // Fetch latest settings from server
+      try {
+        const res = await fetch('/api/payment/settings');
+        const data = await res.json();
+        if (data.settings) {
+          this.paymentSettings = { ...this.paymentSettings, ...data.settings };
+        }
+      } catch (err) {
+        console.warn('Using default payment settings:', err);
       }
+
+      let modal = document.getElementById('checkout-modal');
+      if (modal) modal.remove();
+
+      modal = document.createElement('div');
+      modal.id = 'checkout-modal';
+      modal.className = 'modal-overlay';
+      modal.innerHTML = `
+        <div class="modal-card checkout-modal-card">
+          <button class="modal-close" onclick="NP.closeCheckout()">×</button>
+          
+          <div style="text-align:center;margin-bottom:18px;">
+            <span class="price-badge" style="background:rgba(16,185,129,0.15);color:#10B981;border:1px solid rgba(16,185,129,0.3);padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;">
+              ⚡ Instant 30-Day VIP Activation
+            </span>
+            <h2 style="font-size:24px;font-weight:900;margin:10px 0 4px;color:var(--text);">Join Sami Prompts Community</h2>
+            <p style="color:var(--muted);font-size:14px;">Rs ${this.paymentSettings.price_pkr} / month · Unlock 319+ viral prompts & downloads</p>
+          </div>
+
+          <!-- Payment Tabs -->
+          <div class="payment-tabs">
+            <button type="button" class="payment-tab-btn tab-easypaisa active" id="tab-btn-easypaisa" onclick="NP.switchPaymentTab('easypaisa')">
+              <span style="font-size:18px;">📱</span>
+              <span>EasyPaisa</span>
+            </button>
+            <button type="button" class="payment-tab-btn tab-sadapay" id="tab-btn-sadapay" onclick="NP.switchPaymentTab('sadapay')">
+              <span style="font-size:18px;">🟣</span>
+              <span>SadaPay</span>
+            </button>
+            <button type="button" class="payment-tab-btn tab-meezan" id="tab-btn-meezan" onclick="NP.switchPaymentTab('meezan')">
+              <span style="font-size:18px;">🏦</span>
+              <span>Meezan</span>
+            </button>
+            <button type="button" class="payment-tab-btn tab-whatsapp" id="tab-btn-whatsapp" onclick="NP.switchPaymentTab('whatsapp')">
+              <span style="font-size:18px;">💬</span>
+              <span>WhatsApp</span>
+            </button>
+          </div>
+
+          <!-- Dynamic Account Details Box -->
+          <div id="checkout-account-box" class="account-info-box">
+            <!-- Injected by switchPaymentTab -->
+          </div>
+
+          <div id="checkout-alert" class="alert-msg" style="display:none;margin-bottom:16px;"></div>
+
+          <!-- Proof Submission Form -->
+          <form id="checkout-form" onsubmit="NP.submitPaymentProof(event)">
+            <input type="hidden" id="selected-payment-method" value="easypaisa">
+            
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;" class="pay-inputs-grid">
+              <div class="fld">
+                <label>Your Account Name</label>
+                <input type="text" id="pay-sender-name" value="${this.user.name || ''}" placeholder="e.g. Ali Khan" required>
+              </div>
+              <div class="fld">
+                <label>Sender Mobile / Account</label>
+                <input type="text" id="pay-sender-number" placeholder="e.g. 0300 1234567" required>
+              </div>
+            </div>
+
+            <div class="fld">
+              <label>Transaction ID (TID) / Reference <span style="color:var(--red);">*</span></label>
+              <input type="text" id="pay-tid" placeholder="e.g. 19283746520 or Ref#" required style="font-weight:700;letter-spacing:0.5px;">
+            </div>
+
+            <div class="fld">
+              <label>Screenshot / Receipt Slip (Optional but recommended)</label>
+              <input type="file" id="pay-screenshot" accept="image/*" style="padding:8px 10px;font-size:13px;">
+            </div>
+
+            <button type="submit" id="pay-submit-btn" class="btn btn-primary btn-block btn-lg" style="margin-top:14px;justify-content:center;">
+              Submit Payment Proof (Rs ${this.paymentSettings.price_pkr})
+            </button>
+          </form>
+
+          <!-- WhatsApp Direct Alternative -->
+          <div id="checkout-whatsapp-view" style="display:none;text-align:center;padding:10px 0;">
+            <p style="color:var(--text);font-size:15px;margin-bottom:16px;">
+              Prefer direct payment or having any questions? Connect with Sami directly on WhatsApp:
+            </p>
+            <a href="https://wa.me/${this.paymentSettings.whatsapp_number}?text=Hi%20Sami%2C%20I%20want%20to%20activate%20VIP%20Access%20for%20my%20account%20(${encodeURIComponent(this.user.email)})%20via%20EasyPaisa%20or%20SadaPay." target="_blank" class="btn btn-lg btn-block" style="background:#22C55E;color:#fff;font-weight:700;justify-content:center;gap:8px;">
+              💬 Chat on WhatsApp (+92 311 9405981)
+            </a>
+          </div>
+
+          <!-- Simulation toggle for instant test -->
+          <div style="margin-top:16px;text-align:center;">
+            <button type="button" onclick="NP.processPayment(event)" style="background:none;border:none;color:var(--muted);font-size:11.5px;cursor:pointer;text-decoration:underline;">
+              ⚡ Or Instant Card Simulation (Test Mode)
+            </button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+      this.switchPaymentTab('easypaisa');
       modal.classList.add('open');
     },
 
@@ -406,14 +468,197 @@
       if (modal) modal.classList.remove('open');
     },
 
-    async processPayment(e) {
+    switchPaymentTab(method) {
+      this.activePayMethod = method;
+      document.querySelectorAll('.payment-tab-btn').forEach(b => b.classList.remove('active'));
+      const activeBtn = document.getElementById(`tab-btn-${method}`);
+      if (activeBtn) activeBtn.classList.add('active');
+
+      const hiddenMethod = document.getElementById('selected-payment-method');
+      if (hiddenMethod) hiddenMethod.value = method;
+
+      const box = document.getElementById('checkout-account-box');
+      const form = document.getElementById('checkout-form');
+      const waView = document.getElementById('checkout-whatsapp-view');
+      const s = this.paymentSettings;
+
+      if (method === 'whatsapp') {
+        if (box) box.style.display = 'none';
+        if (form) form.style.display = 'none';
+        if (waView) waView.style.display = 'block';
+        return;
+      }
+
+      if (box) box.style.display = 'block';
+      if (form) form.style.display = 'block';
+      if (waView) waView.style.display = 'none';
+
+      let detailsHtml = '';
+      if (method === 'easypaisa') {
+        detailsHtml = `
+          <div class="account-info-row">
+            <span style="color:var(--muted);">Payment Method:</span>
+            <span class="account-info-val" style="color:#10B981;">📱 EasyPaisa (Mobile Account)</span>
+          </div>
+          <div class="account-info-row">
+            <span style="color:var(--muted);">Account Title:</span>
+            <span class="account-info-val">${s.easypaisa_title}</span>
+          </div>
+          <div class="account-info-row">
+            <span style="color:var(--muted);">Account Number:</span>
+            <span class="account-info-val">
+              <strong style="font-size:16px;letter-spacing:0.5px;">${s.easypaisa_number}</strong>
+              <button type="button" class="copy-chip-btn" onclick="NP.copyNumber('${s.easypaisa_number}', this)">📋 Copy</button>
+            </span>
+          </div>
+          <div class="account-info-row">
+            <span style="color:var(--muted);">Amount Due:</span>
+            <span class="account-info-val" style="color:var(--primary);font-size:16px;">Rs ${s.price_pkr} PKR</span>
+          </div>
+        `;
+      } else if (method === 'sadapay') {
+        detailsHtml = `
+          <div class="account-info-row">
+            <span style="color:var(--muted);">Payment Method:</span>
+            <span class="account-info-val" style="color:#EC4899;">🟣 SadaPay Wallet / Account</span>
+          </div>
+          <div class="account-info-row">
+            <span style="color:var(--muted);">Account Title:</span>
+            <span class="account-info-val">${s.sadapay_title}</span>
+          </div>
+          <div class="account-info-row">
+            <span style="color:var(--muted);">Account Number:</span>
+            <span class="account-info-val">
+              <strong style="font-size:16px;letter-spacing:0.5px;">${s.sadapay_number}</strong>
+              <button type="button" class="copy-chip-btn" onclick="NP.copyNumber('${s.sadapay_number}', this)">📋 Copy</button>
+            </span>
+          </div>
+          <div class="account-info-row">
+            <span style="color:var(--muted);">Amount Due:</span>
+            <span class="account-info-val" style="color:var(--primary);font-size:16px;">Rs ${s.price_pkr} PKR</span>
+          </div>
+        `;
+      } else if (method === 'meezan') {
+        detailsHtml = `
+          <div class="account-info-row">
+            <span style="color:var(--muted);">Bank Name:</span>
+            <span class="account-info-val" style="color:#0284C7;">🏦 Meezan Bank Ltd</span>
+          </div>
+          <div class="account-info-row">
+            <span style="color:var(--muted);">Account Title:</span>
+            <span class="account-info-val">${s.meezan_title}</span>
+          </div>
+          <div class="account-info-row">
+            <span style="color:var(--muted);">Account / IBAN:</span>
+            <span class="account-info-val">
+              <span>${s.meezan_account}</span>
+              <a href="https://wa.me/${s.whatsapp_number}?text=Hi%20Sami%2C%20please%20send%20Meezan%20Bank%20IBAN%20for%20VIP%20payment." target="_blank" class="copy-chip-btn">Ask IBAN</a>
+            </span>
+          </div>
+          <div class="account-info-row">
+            <span style="color:var(--muted);">Amount Due:</span>
+            <span class="account-info-val" style="color:var(--primary);font-size:16px;">Rs ${s.price_pkr} PKR</span>
+          </div>
+        `;
+      }
+      box.innerHTML = detailsHtml;
+    },
+
+    copyNumber(text, btn) {
+      navigator.clipboard.writeText(text).then(() => {
+        const old = btn.textContent;
+        btn.textContent = '✓ Copied!';
+        btn.style.background = '#10B981';
+        btn.style.color = '#fff';
+        setTimeout(() => {
+          btn.textContent = old;
+          btn.style.background = '';
+          btn.style.color = '';
+        }, 2000);
+      }).catch(() => {
+        prompt('Copy this account number:', text);
+      });
+    },
+
+    async submitPaymentProof(e) {
       e.preventDefault();
       const btn = document.getElementById('pay-submit-btn');
       const alertBox = document.getElementById('checkout-alert');
-      if (btn) {
-        btn.disabled = true;
-        btn.textContent = 'Verifying with payment gateway…';
+      const method = document.getElementById('selected-payment-method').value;
+      const tid = document.getElementById('pay-tid').value.trim();
+      const senderName = document.getElementById('pay-sender-name').value.trim();
+      const senderNumber = document.getElementById('pay-sender-number').value.trim();
+      const fileInput = document.getElementById('pay-screenshot');
+
+      if (!tid) {
+        alertBox.className = 'alert-msg error';
+        alertBox.textContent = 'Please enter your Transaction ID (TID).';
+        alertBox.style.display = 'block';
+        return;
       }
+
+      btn.disabled = true;
+      btn.textContent = 'Submitting Proof…';
+      alertBox.style.display = 'none';
+
+      try {
+        const formData = new FormData();
+        formData.append('payment_method', method);
+        formData.append('transaction_id', tid);
+        formData.append('sender_name', senderName);
+        formData.append('sender_number', senderNumber);
+        if (fileInput && fileInput.files[0]) {
+          formData.append('screenshot', fileInput.files[0]);
+        }
+
+        const res = await fetch('/api/payment/submit', {
+          method: 'POST',
+          body: formData
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          const card = document.querySelector('.checkout-modal-card');
+          const s = this.paymentSettings;
+          card.innerHTML = `
+            <div style="text-align:center;padding:20px 10px;">
+              <div style="font-size:54px;margin-bottom:12px;">🎉</div>
+              <h2 style="font-size:24px;font-weight:900;color:var(--text);margin-bottom:8px;">Payment Proof Submitted!</h2>
+              <p style="color:var(--muted);font-size:15px;line-height:1.6;max-width:440px;margin:0 auto 20px;">
+                Thank you! Your Transaction ID <strong>${tid}</strong> has been received. Your VIP access will be verified and activated within 5–15 minutes.
+              </p>
+              
+              <div style="background:var(--card-solid);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:24px;font-size:14px;">
+                <div>Account: <strong>${this.user.email}</strong></div>
+                <div>Method: <strong>${method.toUpperCase()}</strong></div>
+                <div>Amount: <strong>Rs ${s.price_pkr} PKR</strong></div>
+              </div>
+
+              <a href="https://wa.me/${s.whatsapp_number}?text=Hi%20Sami%2C%20I%20have%20submitted%20Rs%20${s.price_pkr}%20payment%20via%20${method.toUpperCase()}%20for%20VIP%20Access.%0AAccount%3A%20${encodeURIComponent(this.user.email)}%0ATID%3A%20${encodeURIComponent(tid)}" target="_blank" class="btn btn-lg btn-block" style="background:#22C55E;color:#fff;justify-content:center;gap:8px;margin-bottom:12px;">
+                💬 Message on WhatsApp for Instant Activation
+              </a>
+
+              <button type="button" class="btn btn-outline btn-block" onclick="NP.closeCheckout(); window.location.href='/account';">
+                View My Account Status
+              </button>
+            </div>
+          `;
+          NP.showToast('✅ Payment proof submitted successfully!');
+        } else {
+          throw new Error(data.error || 'Failed to submit payment.');
+        }
+      } catch (err) {
+        alertBox.className = 'alert-msg error';
+        alertBox.textContent = err.message;
+        alertBox.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = `Submit Payment Proof (Rs ${this.paymentSettings.price_pkr})`;
+      }
+    },
+
+    async processPayment(e) {
+      if (e) e.preventDefault();
+      const alertBox = document.getElementById('checkout-alert');
 
       try {
         const orderRes = await fetch('/api/checkout/create-order', { method: 'POST' });
@@ -427,23 +672,18 @@
         const verifyData = await verifyRes.json();
 
         if (verifyData.success) {
-          alertBox.className = 'alert-msg success';
-          alertBox.textContent = '🎉 Payment Successful! VIP Membership activated.';
-          alertBox.style.display = 'block';
-          NP.showToast('✅ Premium Membership Activated!');
+          NP.showToast('✅ VIP Membership Activated!');
           setTimeout(() => {
             window.location.href = '/account';
-          }, 1200);
+          }, 1000);
         } else {
           throw new Error(verifyData.error || 'Payment verification failed');
         }
       } catch (err) {
-        alertBox.className = 'alert-msg error';
-        alertBox.textContent = err.message;
-        alertBox.style.display = 'block';
-        if (btn) {
-          btn.disabled = false;
-          btn.textContent = 'Pay $5.00 & Activate Access';
+        if (alertBox) {
+          alertBox.className = 'alert-msg error';
+          alertBox.textContent = err.message;
+          alertBox.style.display = 'block';
         }
       }
     }

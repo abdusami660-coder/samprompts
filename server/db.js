@@ -207,6 +207,53 @@ async function initDb() {
     )
   `);
 
+  await run(`
+    CREATE TABLE IF NOT EXISTS payment_settings (
+      key TEXT PRIMARY KEY,
+      value TEXT
+    )
+  `);
+
+  await run(`
+    CREATE TABLE IF NOT EXISTS payment_requests (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      user_name TEXT,
+      user_email TEXT,
+      payment_method TEXT NOT NULL,
+      amount REAL NOT NULL DEFAULT 999,
+      currency TEXT NOT NULL DEFAULT 'PKR',
+      sender_name TEXT,
+      sender_number TEXT,
+      transaction_id TEXT NOT NULL,
+      screenshot_url TEXT,
+      notes TEXT,
+      status TEXT DEFAULT 'pending',
+      admin_notes TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      reviewed_at DATETIME
+    )
+  `);
+
+  // Seed default payment settings if empty
+  const defaultPaymentSettings = [
+    { key: 'price_pkr', value: '999' },
+    { key: 'price_usd', value: '5' },
+    { key: 'easypaisa_number', value: '03119405981' },
+    { key: 'easypaisa_title', value: 'Abdul sami shahid' },
+    { key: 'sadapay_number', value: '03275693976' },
+    { key: 'sadapay_title', value: 'Abdul sami shahid' },
+    { key: 'meezan_title', value: 'Abdul sami shahid' },
+    { key: 'meezan_account', value: 'Contact WhatsApp' },
+    { key: 'meezan_iban', value: 'PK... (Contact WhatsApp)' },
+    { key: 'whatsapp_number', value: '923119405981' },
+    { key: 'instructions', value: 'Transfer Rs 999 to EasyPaisa or SadaPay. Enter your Transaction ID (TID) or upload screenshot. VIP membership will be activated instantly upon verification.' }
+  ];
+
+  for (const s of defaultPaymentSettings) {
+    await run(`INSERT OR IGNORE INTO payment_settings (key, value) VALUES (?, ?)`, [s.key, s.value]);
+  }
+
   const existingSocial = await get(`SELECT COUNT(*) as cnt FROM social_accounts`);
   if (!existingSocial || existingSocial.cnt === 0) {
     console.log("Seeding initial social accounts portfolio...");

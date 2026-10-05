@@ -531,8 +531,8 @@ app.post('/api/checkout/create-order', async (req, res) => {
     res.json({
       success: true,
       order_id: orderId,
-      amount: 500, // 5.00 USD in cents
-      currency: 'USD',
+      amount: 999, // 999 PKR
+      currency: 'PKR',
       user_name: user.name,
       user_email: user.email,
       key_id: 'rzp_live_simulated_key'
@@ -558,7 +558,7 @@ app.post('/api/checkout/verify-payment', async (req, res) => {
     // Record order
     await run(`
       INSERT INTO orders (user_id, order_id, payment_id, amount, currency, status)
-      VALUES (?, ?, ?, 5.00, 'USD', 'completed')
+      VALUES (?, ?, ?, 999, 'PKR', 'completed')
     `, [user.id, order_id || 'manual_order', payId]);
 
     // Activate membership
@@ -575,6 +575,178 @@ app.post('/api/checkout/verify-payment', async (req, res) => {
   } catch (err) {
     console.error('Payment verification error:', err);
     res.status(500).json({ error: 'Payment verification failed.' });
+  }
+});
+
+// ----------------------------------------------------
+// LOCAL & INTERNATIONAL PAYMENT GATEWAYS (EasyPaisa, SadaPay, Meezan Bank)
+// ----------------------------------------------------
+
+// Get public payment settings and account numbers
+app.get('/api/payment/settings', async (req, res) => {
+  try {
+    const rows = await all(`SELECT key, value FROM payment_settings`);
+    const settings = {};
+    rows.forEach(r => { settings[r.key] = r.value; });
+    res.json({ success: true, settings });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to load payment settings' });
+  }
+});
+
+// Submit manual payment proof (EasyPaisa / SadaPay / Meezan)
+app.post('/api/payment/submit', upload.single('screenshot'), async (req, res) => {
+  try {
+    const user = await getCurrentUser(req);
+    if (!user) return res.status(401).json({ error: 'Please login to submit payment.' });
+
+    const { payment_method, transaction_id, sender_name, sender_number, notes } = req.body;
+
+    if (!payment_method || !transaction_id) {
+      return res.status(400).json({ error: 'Payment method and Transaction ID (TID) are required.' });
+    }
+
+    // Get current PKR price
+    const priceRow = await get(`SELECT value FROM payment_settings WHERE key = 'price_pkr'`);
+    const price = priceRow ? parseFloat(priceRow.value) : 999;
+
+    const screenshotUrl = req.file ? `/uploads/${req.file.filename}` : null;
+
+    const result = await run(`
+      INSERT INTO payment_requests (user_id, user_name, user_email, payment_method, amount, currency, sender_name, sender_number, transaction_id, screenshot_url, notes, status)
+      VALUES (?, ?, ?, ?, ?, 'PKR', ?, ?, ?, ?, ?, 'pending')
+    `, [
+      user.id,
+      user.name,
+      user.email,
+      payment_method,
+      price,
+      sender_name || user.name,
+      sender_number || '',
+      transaction_id.trim(),
+      screenshotUrl,
+      notes || ''
+    ]);
+
+    res.json({
+      success: true,
+      request_id: result.lastID,
+      message: 'Payment proof submitted successfully! Your VIP access will be activated shortly after verification.'
+    });
+  } catch (err) {
+    console.error('Payment submit error:', err);
+    res.status(500).json({ error: 'Failed to submit payment proof.' });
+  }
+});
+
+// Get user payment history
+app.get('/api/payment/my-requests', async (req, res) => {
+  try {
+    const user = await getCurrentUser(req);
+    if (!user) return res.status(401).json({ error: 'Login required.' });
+
+    const requests = await all(
+      `SELECT * FROM payment_requests WHERE user_id = ? ORDER BY created_at DESC`,
+      [user.id]
+    );
+    res.json({ success: true, requests });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch payment history.' });
+  }
+});
+
+// Admin: List all payment requests
+app.get('/api/admin/payments', requireAdmin, async (req, res) => {
+  try {
+    const payments = await all(`
+      SELECT p.*, u.email as current_user_email, u.membership_status, u.membership_expires_at 
+      FROM payment_requests p
+      LEFT JOIN users u ON p.user_id = u.id
+      ORDER BY 
+        CASE p.status WHEN 'pending' THEN 1 ELSE 2 END,
+        p.created_at DESC
+    `);
+    res.json({ success: true, payments });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch payments.' });
+  }
+});
+
+// Admin: Approve payment request & activate VIP
+app.post('/api/admin/payments/:id/approve', requireAdmin, async (req, res) => {
+  try {
+    const payment = await get(`SELECT * FROM payment_requests WHERE id = ?`, [req.params.id]);
+    if (!payment) return res.status(404).json({ error: 'Payment request not found.' });
+
+    const user = await get(`SELECT * FROM users WHERE id = ?`, [payment.user_id]);
+    if (!user) return res.status(404).json({ error: 'User not found.' });
+
+    // Calculate 30 days extension
+    let baseTime = new Date();
+    if (user.membership_status === 'premium' && user.membership_expires_at) {
+      const currentExpiry = new Date(user.membership_expires_at);
+      if (currentExpiry > baseTime) {
+        baseTime = currentExpiry;
+      }
+    }
+    const newExpiry = new Date(baseTime.getTime() + 30 * 24 * 60 * 60 * 1000);
+    const expiryStr = newExpiry.toISOString().replace('T', ' ').substring(0, 19);
+
+    // Update payment request
+    await run(`
+      UPDATE payment_requests 
+      SET status = 'approved', reviewed_at = CURRENT_TIMESTAMP, admin_notes = ? 
+      WHERE id = ?
+    `, [req.body.admin_notes || 'Approved by Admin', payment.id]);
+
+    // Update user to premium
+    await run(`
+      UPDATE users SET membership_status = 'premium', membership_expires_at = ? WHERE id = ?
+    `, [expiryStr, user.id]);
+
+    // Record in orders table
+    await run(`
+      INSERT INTO orders (user_id, order_id, payment_id, amount, currency, status)
+      VALUES (?, ?, ?, ?, ?, 'completed')
+    `, [user.id, `manual_${payment.id}`, payment.transaction_id, payment.amount, payment.currency]);
+
+    res.json({
+      success: true,
+      message: `Payment approved! VIP membership for ${user.email} activated until ${expiryStr}.`,
+      membership_expires_at: expiryStr
+    });
+  } catch (err) {
+    console.error('Payment approval error:', err);
+    res.status(500).json({ error: 'Failed to approve payment.' });
+  }
+});
+
+// Admin: Reject payment request
+app.post('/api/admin/payments/:id/reject', requireAdmin, async (req, res) => {
+  try {
+    const { admin_notes } = req.body;
+    await run(`
+      UPDATE payment_requests 
+      SET status = 'rejected', reviewed_at = CURRENT_TIMESTAMP, admin_notes = ? 
+      WHERE id = ?
+    `, [admin_notes || 'Invalid transaction ID or payment not received.', req.params.id]);
+
+    res.json({ success: true, message: 'Payment request marked as rejected.' });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to reject payment.' });
+  }
+});
+
+// Admin: Update Payment Settings
+app.put('/api/admin/payment-settings', requireAdmin, async (req, res) => {
+  try {
+    const settings = req.body;
+    for (const [key, value] of Object.entries(settings)) {
+      await run(`INSERT OR REPLACE INTO payment_settings (key, value) VALUES (?, ?)`, [key, String(value)]);
+    }
+    res.json({ success: true, message: 'Payment settings updated successfully!' });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to update payment settings.' });
   }
 });
 
